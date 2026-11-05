@@ -1,4 +1,4 @@
-# Paolone contro Monsignor Panza
+# The Monsignor Chronicles : Battle for Chiappetons
 
 Run-and-gun a scorrimento in pixel art, ambientato a **Chiappetons**, paesino del Sud Italia.
 Paolone combatte i fedeli del corrotto Monsignor Angelius Panza a colpi di sukkini.
