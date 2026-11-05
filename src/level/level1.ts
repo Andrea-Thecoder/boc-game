@@ -29,9 +29,21 @@ export interface WaveDef {
   line?: string;
 }
 
-const balcony = (x: number, y: number): PropDef => ({ key: 'balcone', x, y: y + 10, platform: { dx: 0, top: y, w: 48 }, depth: 20 });
+const balcony = (x: number, y: number): PropDef => ({
+  key: 'balcone',
+  x,
+  y: y + 10,
+  platform: { dx: 0, top: y, w: 48 },
+  depth: 20,
+});
 const ape = (x: number): PropDef => ({ key: 'ape', x, platform: { dx: -7, top: GROUND_Y - 15, w: 28 }, depth: 30 });
-const crate = (x: number, y = GROUND_Y): PropDef => ({ key: 'cassetta', x, y, platform: { dx: 0, top: y - 8, w: 18 }, depth: 30 });
+const crate = (x: number, y = GROUND_Y): PropDef => ({
+  key: 'cassetta',
+  x,
+  y,
+  platform: { dx: 0, top: y - 8, w: 18 },
+  depth: 30,
+});
 
 export const LEVEL1 = {
   name: 'VIA ROMA, CHIAPPETONS',
@@ -43,7 +55,9 @@ export const LEVEL1 = {
     ape(560),
     { key: 'lampione', x: 640, depth: 15 },
     balcony(730, 112),
-    crate(830), crate(848), crate(839, GROUND_Y - 12),
+    crate(830),
+    crate(848),
+    crate(839, GROUND_Y - 12),
     { key: 'fico', x: 920, depth: 25 },
     balcony(1080, 104),
     { key: 'lampione', x: 1000, depth: 15 },
@@ -54,7 +68,8 @@ export const LEVEL1 = {
     balcony(1880, 100),
     { key: 'lampione', x: 1800, depth: 15 },
     ape(2060),
-    crate(2240), crate(2258),
+    crate(2240),
+    crate(2258),
     { key: 'lampione', x: 2300, depth: 15 },
     { key: 'fico', x: 2420, depth: 25 },
     balcony(2520, 108),
@@ -75,15 +90,89 @@ export const LEVEL1 = {
   ] as { kind: PickupKind; x: number; y: number }[],
 
   waves: [
-    { trigger: 170, spawns: [{ type: 'chierichetto', at: 'right' }, { type: 'chierichetto', at: 'right', delay: 900 }], line: 'Chierichetti! Venite, vi offro un succhino... IN FACCIA!' },
-    { trigger: 440, spawns: [{ type: 'beghina', at: 'right' }, { type: 'chierichetto', at: 'right', delay: 900 }] },
-    { trigger: 700, spawns: [{ type: 'sacrestano', at: 'right' }, { type: 'chierichetto', at: 1080, y: 104 }] },
-    { trigger: 980, spawns: [{ type: 'beghina', at: 'right' }, { type: 'beghina', at: 'left', delay: 600 }, { type: 'chierichetto', at: 'right', delay: 1400 }], line: 'Pure dietro! Ma che è, una processione?' },
-    { trigger: 1290, spawns: [{ type: 'sacrestano', at: 'right' }, { type: 'chierichetto', at: 'right', delay: 700 }, { type: 'chierichetto', at: 1560, y: 110, delay: 300 }] },
-    { trigger: 1600, spawns: [{ type: 'beghina', at: 'right' }, { type: 'beghina', at: 'right', delay: 700 }, { type: 'beghina', at: 'right', delay: 1400 }], line: 'Le beghine col rosario... qui ci vuole la panzata!' },
-    { trigger: 1880, spawns: [{ type: 'sacrestano', at: 'right' }, { type: 'chierichetto', at: 1880, y: 100 }, { type: 'beghina', at: 'left', delay: 900 }] },
-    { trigger: 2200, spawns: [{ type: 'chierichetto', at: 'right' }, { type: 'chierichetto', at: 'right', delay: 500 }, { type: 'beghina', at: 'left', delay: 800 }, { type: 'beghina', at: 'right', delay: 1300 }, { type: 'sacrestano', at: 'right', delay: 2000 }] },
-    { trigger: 2580, spawns: [{ type: 'sacrestano', at: 'right' }, { type: 'sacrestano', at: 'right', delay: 1500 }, { type: 'chierichetto', at: 2820, y: 102 }], line: 'Che puzza d\'incenso... peggio dei calzini di zio Gaetano!' },
-    { trigger: 2880, spawns: [{ type: 'beghina', at: 'right' }, { type: 'chierichetto', at: 'right', delay: 400 }, { type: 'chierichetto', at: 'left', delay: 800 }, { type: 'sacrestano', at: 'right', delay: 1400 }] },
+    {
+      trigger: 170,
+      spawns: [
+        { type: 'chierichetto', at: 'right' },
+        { type: 'chierichetto', at: 'right', delay: 900 },
+      ],
+      line: 'Chierichetti! Venite, vi offro un succhino... IN FACCIA!',
+    },
+    {
+      trigger: 440,
+      spawns: [
+        { type: 'beghina', at: 'right' },
+        { type: 'chierichetto', at: 'right', delay: 900 },
+      ],
+    },
+    {
+      trigger: 700,
+      spawns: [
+        { type: 'sacrestano', at: 'right' },
+        { type: 'chierichetto', at: 1080, y: 104 },
+      ],
+    },
+    {
+      trigger: 980,
+      spawns: [
+        { type: 'beghina', at: 'right' },
+        { type: 'beghina', at: 'left', delay: 600 },
+        { type: 'chierichetto', at: 'right', delay: 1400 },
+      ],
+      line: 'Pure dietro! Ma che è, una processione?',
+    },
+    {
+      trigger: 1290,
+      spawns: [
+        { type: 'sacrestano', at: 'right' },
+        { type: 'chierichetto', at: 'right', delay: 700 },
+        { type: 'chierichetto', at: 1560, y: 110, delay: 300 },
+      ],
+    },
+    {
+      trigger: 1600,
+      spawns: [
+        { type: 'beghina', at: 'right' },
+        { type: 'beghina', at: 'right', delay: 700 },
+        { type: 'beghina', at: 'right', delay: 1400 },
+      ],
+      line: 'Le beghine col rosario... qui ci vuole la panzata!',
+    },
+    {
+      trigger: 1880,
+      spawns: [
+        { type: 'sacrestano', at: 'right' },
+        { type: 'chierichetto', at: 1880, y: 100 },
+        { type: 'beghina', at: 'left', delay: 900 },
+      ],
+    },
+    {
+      trigger: 2200,
+      spawns: [
+        { type: 'chierichetto', at: 'right' },
+        { type: 'chierichetto', at: 'right', delay: 500 },
+        { type: 'beghina', at: 'left', delay: 800 },
+        { type: 'beghina', at: 'right', delay: 1300 },
+        { type: 'sacrestano', at: 'right', delay: 2000 },
+      ],
+    },
+    {
+      trigger: 2580,
+      spawns: [
+        { type: 'sacrestano', at: 'right' },
+        { type: 'sacrestano', at: 'right', delay: 1500 },
+        { type: 'chierichetto', at: 2820, y: 102 },
+      ],
+      line: "Che puzza d'incenso... peggio dei calzini di zio Gaetano!",
+    },
+    {
+      trigger: 2880,
+      spawns: [
+        { type: 'beghina', at: 'right' },
+        { type: 'chierichetto', at: 'right', delay: 400 },
+        { type: 'chierichetto', at: 'left', delay: 800 },
+        { type: 'sacrestano', at: 'right', delay: 1400 },
+      ],
+    },
   ] as WaveDef[],
 };

@@ -93,7 +93,10 @@ export class MonsignorPanza extends Enemy {
       case 'return':
         if (time < this.modeUntil) return;
         body.setVelocityX(110);
-        if (this.x >= BOSS_ARENA_X + 240) { body.setVelocityX(0); this.mode = 'fight'; }
+        if (this.x >= BOSS_ARENA_X + 240) {
+          body.setVelocityX(0);
+          this.mode = 'fight';
+        }
         return;
     }
 
@@ -136,11 +139,19 @@ export class MonsignorPanza extends Enemy {
   }
 
   private volley(p: Player) {
-    const sx = this.x - 46, sy = this.y - 32;
+    const sx = this.x - 46,
+      sy = this.y - 32;
     const n = this.phase === 1 ? 3 : 5;
     for (let i = 0; i < n; i++) {
       const t = 0.55 + i * 0.16;
-      const [vx, vy] = EnemyBullet.lob(sx, sy, p.x + (i - (n - 1) / 2) * 18, p.y - 8, t, EnemyBullet.gravityOf('goccia'));
+      const [vx, vy] = EnemyBullet.lob(
+        sx,
+        sy,
+        p.x + (i - (n - 1) / 2) * 18,
+        p.y - 8,
+        t,
+        EnemyBullet.gravityOf('goccia'),
+      );
       this.gs.addEnemyBullet(new EnemyBullet(this.gs, 'goccia', sx, sy, vx, vy));
     }
     sfx.holyWater();
@@ -190,11 +201,20 @@ export class MonsignorPanza extends Enemy {
     }
     this.gs.time.delayedCall(1900, () => {
       this.setFrame(3).setTint(0x8a8394);
-      const panza = this.gs.add.image(this.x + 2, this.y - 47, 'panza', 0)
-        .setCrop(26, 0, 48, 34).setOrigin(50 / 96, 17 / 64).setDepth(70);
+      const panza = this.gs.add
+        .image(this.x + 2, this.y - 47, 'panza', 0)
+        .setCrop(26, 0, 48, 34)
+        .setOrigin(50 / 96, 17 / 64)
+        .setDepth(70);
       this.gs.say(panza, 'Maledetto sukkinooooo!', 1600, true);
       this.gs.tweens.add({
-        targets: panza, y: -60, x: panza.x + 60, angle: 720, scale: 0.4, duration: 1800, ease: 'Quad.In',
+        targets: panza,
+        y: -60,
+        x: panza.x + 60,
+        angle: 720,
+        scale: 0.4,
+        duration: 1800,
+        ease: 'Quad.In',
         onComplete: () => {
           panza.destroy();
           this.gs.sparkle(this.x + 60, 4, 12);

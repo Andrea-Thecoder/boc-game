@@ -1,4 +1,4 @@
-import Phaser from 'phaser';
+import type Phaser from 'phaser';
 import { Painter } from './painter';
 import { P } from './palette';
 
@@ -30,12 +30,30 @@ export const PAOLONE_H = 34;
 /** Legs frames: 0 idle, 1-4 run cycle, 5 jump. */
 function paoloneLegs(p: Painter, f: number) {
   p.ox += 2;
-  let fx = 0, bx = 0, fy = 0, by = 0;
-  if (f === 1) { fx = 3; bx = -3; }
-  if (f === 2) { fy = -2; }
-  if (f === 3) { fx = -3; bx = 3; }
-  if (f === 4) { by = -2; }
-  if (f === 5) { fx = 2; bx = -1; fy = -3; by = -2; }
+  let fx = 0,
+    bx = 0,
+    fy = 0,
+    by = 0;
+  if (f === 1) {
+    fx = 3;
+    bx = -3;
+  }
+  if (f === 2) {
+    fy = -2;
+  }
+  if (f === 3) {
+    fx = -3;
+    bx = 3;
+  }
+  if (f === 4) {
+    by = -2;
+  }
+  if (f === 5) {
+    fx = 2;
+    bx = -1;
+    fy = -3;
+    by = -2;
+  }
   const leg = (x: number, dy: number, back: boolean) => {
     p.rect(x, 26 + dy, 4, 5, back ? P.skinShade : P.skin);
     p.rect(x - 1, 31 + dy, 6, 2, back ? '#23784f' : P.slipper);
@@ -50,7 +68,16 @@ function paoloneLegs(p: Painter, f: number) {
 
 /** Torso frames. */
 export const TORSO = {
-  idle: 0, bob: 1, fwd: 2, up: 3, diagUp: 4, diagDown: 5, down: 6, windup: 7, panza: 8, hurt: 9,
+  idle: 0,
+  bob: 1,
+  fwd: 2,
+  up: 3,
+  diagUp: 4,
+  diagDown: 5,
+  down: 6,
+  windup: 7,
+  panza: 8,
+  hurt: 9,
 } as const;
 
 function paoloneTorso(p: Painter, f: number) {
@@ -65,7 +92,8 @@ function paoloneTorso(p: Painter, f: number) {
   else p.line(9, 12 + b, 7, 20 + b, P.skinShade, 3);
 
   // the legendary belly
-  const cx = 16 + lean, cy = 17 + b;
+  const cx = 16 + lean,
+    cy = 17 + b;
   p.ellipse(cx, cy, 10, 8.5, P.skinShade);
   p.ellipse(cx - 1, cy, 9, 8, P.skin);
   p.ellipse(cx, cy, 10, 8.5, P.tankShade, -99, 20 + b);
@@ -74,13 +102,16 @@ function paoloneTorso(p: Painter, f: number) {
   p.rect(11 + lean, 8 + b, 2, 3, P.tank);
   p.rect(19 + lean, 8 + b, 2, 3, P.tank);
   // juice stains, he's been at it all day
-  p.px(cx + 4, cy - 3, P.stain).px(cx + 5, cy - 2, P.stain).px(cx + 4, cy - 2, P.tamarindo);
+  p.px(cx + 4, cy - 3, P.stain)
+    .px(cx + 5, cy - 2, P.stain)
+    .px(cx + 4, cy - 2, P.tamarindo);
   p.px(cx - 3, cy + 1, P.ace).px(cx - 2, cy + 2, P.ace);
   p.px(cx + 3, 23 + b, P.skinDark); // navel
   p.px(cx + 1, 22 + b, P.skinShade).px(cx + 5, 22 + b, P.skinShade);
 
   // head + double chin
-  const hx = 18 + lean, hy = 6 + b;
+  const hx = 18 + lean,
+    hy = 6 + b;
   p.ellipse(hx + 1, hy + 4, 4.5, 2.5, P.skinShade);
   p.ellipse(hx, hy + 3.5, 4.5, 2.5, P.skin);
   p.ellipse(hx, hy, 5, 5, P.skin);
@@ -88,19 +119,25 @@ function paoloneTorso(p: Painter, f: number) {
   p.rect(hx - 5, hy - 2, 2, 4, P.hair);
   p.px(hx - 2, hy + 1, P.skinShade).px(hx - 2, hy, P.skinShade);
   if (hurt) {
-    p.px(hx + 1, hy - 1, P.black).px(hx + 3, hy - 1, P.black).px(hx + 2, hy, P.black)
-      .px(hx + 1, hy + 1, P.black).px(hx + 3, hy + 1, P.black);
+    p.px(hx + 1, hy - 1, P.black)
+      .px(hx + 3, hy - 1, P.black)
+      .px(hx + 2, hy, P.black)
+      .px(hx + 1, hy + 1, P.black)
+      .px(hx + 3, hy + 1, P.black);
     p.rect(hx + 2, hy + 3, 2, 2, P.skinDark);
   } else {
     p.rect(hx + 1, hy - 2, 3, 1, P.hair);
     p.rect(hx + 2, hy - 1, 1, 2, P.black);
     p.px(hx + 4, hy + 2, P.cheek).px(hx + 3, hy + 2, P.cheek);
     p.rect(hx + 2, hy + 4, 3, 1, P.skinDark).px(hx + 5, hy + 3, P.skinDark);
-    p.px(hx, hy + 5, P.darkGrey).px(hx + 2, hy + 6, P.darkGrey).px(hx - 1, hy + 4, P.darkGrey);
+    p.px(hx, hy + 5, P.darkGrey)
+      .px(hx + 2, hy + 6, P.darkGrey)
+      .px(hx - 1, hy + 4, P.darkGrey);
   }
 
   // front arm
-  const sx = 22 + lean, sy = 12 + b;
+  const sx = 22 + lean,
+    sy = 12 + b;
   const hand = (x: number, y: number) => p.rect(x - 1, y - 1, 3, 3, P.skin);
   const brick = (x: number, y: number) => {
     p.rect(x - 1, y - 3, 3, 4, P.tamarindo);
@@ -108,16 +145,44 @@ function paoloneTorso(p: Painter, f: number) {
   };
   switch (f) {
     case TORSO.idle:
-    case TORSO.bob: p.line(sx, sy, 24, 20 + b, P.skin, 3); hand(24, 21 + b); break;
-    case TORSO.fwd: p.line(sx, sy, 29, 12, P.skin, 3); hand(30, 12); break;
-    case TORSO.up: p.line(sx, sy, 23, 2, P.skin, 3); hand(23, 1); break;
-    case TORSO.diagUp: p.line(sx, sy, 28, 5, P.skin, 3); hand(29, 4); break;
-    case TORSO.diagDown: p.line(sx, sy, 28, 19, P.skin, 3); hand(29, 20); break;
-    case TORSO.down: p.line(sx, sy, 24, 25, P.skin, 3); hand(24, 27); break;
+    case TORSO.bob:
+      p.line(sx, sy, 24, 20 + b, P.skin, 3);
+      hand(24, 21 + b);
+      break;
+    case TORSO.fwd:
+      p.line(sx, sy, 29, 12, P.skin, 3);
+      hand(30, 12);
+      break;
+    case TORSO.up:
+      p.line(sx, sy, 23, 2, P.skin, 3);
+      hand(23, 1);
+      break;
+    case TORSO.diagUp:
+      p.line(sx, sy, 28, 5, P.skin, 3);
+      hand(29, 4);
+      break;
+    case TORSO.diagDown:
+      p.line(sx, sy, 28, 19, P.skin, 3);
+      hand(29, 20);
+      break;
+    case TORSO.down:
+      p.line(sx, sy, 24, 25, P.skin, 3);
+      hand(24, 27);
+      break;
     case TORSO.windup:
-      p.line(sx, sy, 26, 7, P.skin, 3); p.line(26, 7, 22, 2, P.skin, 3); hand(22, 2); brick(22, 2); break;
-    case TORSO.panza: p.line(sx, sy, 17, 18, P.skin, 3); hand(16, 18); break;
-    case TORSO.hurt: p.line(sx, sy, 28, 3, P.skin, 3); hand(29, 2); break;
+      p.line(sx, sy, 26, 7, P.skin, 3);
+      p.line(26, 7, 22, 2, P.skin, 3);
+      hand(22, 2);
+      brick(22, 2);
+      break;
+    case TORSO.panza:
+      p.line(sx, sy, 17, 18, P.skin, 3);
+      hand(16, 18);
+      break;
+    case TORSO.hurt:
+      p.line(sx, sy, 28, 3, P.skin, 3);
+      hand(29, 2);
+      break;
   }
 }
 
@@ -178,7 +243,13 @@ function beghina(p: Painter, f: number) {
   }
   if (f === 2) {
     p.line(19, 12, 21, 4, P.cassock, 2).px(21, 3, P.skin);
-    [[23, 1], [25, 1], [27, 2], [28, 4], [27, 6]].forEach(([x, y]) => p.px(x, y, P.beads));
+    [
+      [23, 1],
+      [25, 1],
+      [27, 2],
+      [28, 4],
+      [27, 6],
+    ].forEach(([x, y]) => p.px(x, y, P.beads));
     p.rect(25, 7, 1, 3, P.gold).rect(24, 8, 3, 1, P.gold);
   } else if (f === 3) {
     p.line(19, 12, 24, 11, P.cassock, 2).px(25, 11, P.skin);
@@ -209,7 +280,9 @@ function sacrestano(p: Painter, f: number) {
   p.line(14, 13, 18, 15, P.brown, 2).px(19, 15, P.skin);
   const [cx, cy] = f === 0 ? [25, 20] : f === 1 ? [25, 9] : [20, 24];
   p.line(19, 15, cx, cy - 3, P.grey, 1);
-  p.ellipse(cx, cy, 2.5, 3, P.gold).rect(cx - 2, cy + 1, 5, 1, P.goldShade).px(cx, cy - 3, P.goldShade);
+  p.ellipse(cx, cy, 2.5, 3, P.gold)
+    .rect(cx - 2, cy + 1, 5, 1, P.goldShade)
+    .px(cx, cy - 3, P.goldShade);
   if (!dead) p.px(cx - 1, cy - 5, P.toxic).px(cx + 1, cy - 6, P.toxicDark);
 }
 
@@ -236,13 +309,20 @@ function panza(p: Painter, f: number) {
   // punch out inner dome then fill with faint glass
   for (let y = 7; y <= 33; y++) {
     for (let x = 28; x <= 72; x++) {
-      const dx = (x + 0.5 - 50) / 21.5, dy = (y + 0.5 - 30) / 22.5;
-      if (dx * dx + dy * dy <= 1) { p.clear(x, y, 1, 1); p.px(x, y, 'rgba(150,205,235,0.22)'); }
+      const dx = (x + 0.5 - 50) / 21.5,
+        dy = (y + 0.5 - 30) / 22.5;
+      if (dx * dx + dy * dy <= 1) {
+        p.clear(x, y, 1, 1);
+        p.px(x, y, 'rgba(150,205,235,0.22)');
+      }
     }
   }
-  if (f === 3) { // wreck: empty, cracked dome
-    p.line(38, 12, 46, 20, 'rgba(255,255,255,0.75)').line(46, 20, 44, 28, 'rgba(255,255,255,0.75)')
-      .line(46, 20, 56, 16, 'rgba(255,255,255,0.75)').line(56, 16, 62, 22, 'rgba(255,255,255,0.75)');
+  if (f === 3) {
+    // wreck: empty, cracked dome
+    p.line(38, 12, 46, 20, 'rgba(255,255,255,0.75)')
+      .line(46, 20, 44, 28, 'rgba(255,255,255,0.75)')
+      .line(46, 20, 56, 16, 'rgba(255,255,255,0.75)')
+      .line(56, 16, 62, 22, 'rgba(255,255,255,0.75)');
     p.rect(44, 30, 12, 4, P.redShade);
     return;
   }
@@ -330,15 +410,36 @@ export function registerSprites(scene: Phaser.Scene) {
   sheet(scene, 'panza', 96, 64, 4, panza);
 
   (Object.keys(FLAVOURS) as Flavour[]).forEach((k) => sheet(scene, `sukkino-${k}`, 8, 10, 1, sukkino(FLAVOURS[k])));
-  sheet(scene, 'pickup-pera', 13, 15, 1, bigSukkino(P.pera, (p) => {
-    p.ellipse(6.5, 9, 2, 1.8, P.pera).ellipse(6.5, 7.5, 1.2, 1.2, P.pera).px(7, 6, P.brown);
-  }));
-  sheet(scene, 'pickup-ace', 13, 15, 1, bigSukkino(P.ace, (p) => {
-    p.ellipse(4.5, 8.5, 1.7, 1.7, P.ace).ellipse(8, 8.5, 1.7, 1.7, P.gold).px(6, 9, P.red);
-  }));
-  sheet(scene, 'pickup-pesca', 13, 15, 1, bigSukkino(P.pesca, (p) => {
-    p.ellipse(6.5, 8.5, 2.2, 2, P.pesca).px(6, 8, P.cheek).px(7, 6, P.cactus).px(8, 6, P.cactus);
-  }));
+  sheet(
+    scene,
+    'pickup-pera',
+    13,
+    15,
+    1,
+    bigSukkino(P.pera, (p) => {
+      p.ellipse(6.5, 9, 2, 1.8, P.pera).ellipse(6.5, 7.5, 1.2, 1.2, P.pera).px(7, 6, P.brown);
+    }),
+  );
+  sheet(
+    scene,
+    'pickup-ace',
+    13,
+    15,
+    1,
+    bigSukkino(P.ace, (p) => {
+      p.ellipse(4.5, 8.5, 1.7, 1.7, P.ace).ellipse(8, 8.5, 1.7, 1.7, P.gold).px(6, 9, P.red);
+    }),
+  );
+  sheet(
+    scene,
+    'pickup-pesca',
+    13,
+    15,
+    1,
+    bigSukkino(P.pesca, (p) => {
+      p.ellipse(6.5, 8.5, 2.2, 2, P.pesca).px(6, 8, P.cheek).px(7, 6, P.cactus).px(8, 6, P.cactus);
+    }),
+  );
   sheet(scene, 'panzerotto', 15, 10, 1, (p) => {
     p.ellipse(7.5, 8, 6.5, 6, '#d8962e', -99, 8).ellipse(7.5, 8, 5, 4.5, '#efb64a', -99, 7);
     for (let x = 2; x <= 13; x += 2) p.px(x, 8, '#b5741f');
@@ -358,8 +459,13 @@ export function registerSprites(scene: Phaser.Scene) {
   });
   sheet(scene, 'fumo', 16, 14, 2, (p, f) => {
     const o = f;
-    p.ellipse(5, 8 - o, 4, 4, P.toxicDark).ellipse(10, 7 + o, 4.5, 4.5, P.toxicDark).ellipse(8, 5, 4, 3.5, P.toxic);
-    p.ellipse(6, 7 - o, 2.5, 2.5, P.toxic).px(9, 4, '#c8e870').px(5, 6, P.purple).px(11, 8, P.purple);
+    p.ellipse(5, 8 - o, 4, 4, P.toxicDark)
+      .ellipse(10, 7 + o, 4.5, 4.5, P.toxicDark)
+      .ellipse(8, 5, 4, 3.5, P.toxic);
+    p.ellipse(6, 7 - o, 2.5, 2.5, P.toxic)
+      .px(9, 4, '#c8e870')
+      .px(5, 6, P.purple)
+      .px(11, 8, P.purple);
   });
   sheet(scene, 'campana', 13, 14, 1, campana);
   sheet(scene, 'dot', 2, 2, 1, (p) => p.rect(0, 0, 2, 2, '#fff'), false);

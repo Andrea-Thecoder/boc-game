@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { DEBUG, GRAVITY, H, W } from './config';
+import { DEBUG, E2E, GRAVITY, H, W } from './config';
+import { installTestHooks } from './debug/testHooks';
 import BootScene from './scenes/BootScene';
 import TitleScene from './scenes/TitleScene';
 import GameScene from './scenes/GameScene';
@@ -20,3 +21,4 @@ const game = new Phaser.Game({
   scene: [BootScene, TitleScene, GameScene, HudScene, GameOverScene, VictoryScene],
 });
 if (DEBUG) (window as unknown as { game: Phaser.Game }).game = game;
+if (DEBUG || E2E) installTestHooks(game);

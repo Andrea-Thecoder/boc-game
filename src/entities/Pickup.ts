@@ -21,7 +21,8 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
       scene.tweens.add({ targets: this, y: y - 4, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
     }
     this.sparkles = scene.time.addEvent({
-      delay: 900, loop: true,
+      delay: 900,
+      loop: true,
       callback: () => scene.sparkle(this.x, this.y - this.height / 2),
     });
   }

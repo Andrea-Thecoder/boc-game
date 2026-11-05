@@ -12,12 +12,34 @@ se il codice e il GDD divergono, chiedere all'utente quale dei due va aggiornato
 ## Comandi
 
 ```bash
-npm run dev        # dev server
-npm run typecheck  # tsc --noEmit
-npm run build      # typecheck + build in dist/
+npm run dev           # dev server
+npm run typecheck     # tsc --noEmit
+npm run lint          # ESLint (type-aware), lint:fix per correggere
+npm run format        # Prettier sul codice (i file .md sono esclusi di proposito)
+npm run format:check  # verifica formattazione senza modificare
+npm run build         # typecheck + build in dist/
+npm run check         # typecheck, lint, format:check, build
+npm run test:e2e      # smoke test Playwright sulla build di produzione (test:e2e:ui per la modalità interattiva)
 ```
 
-`?debug` nell'URL mostra le hitbox ed espone `window.game`.
+Prima di considerare finito un lavoro devono passare `npm run check` **e** `npm run test:e2e`.
+
+**CI** (`.github/workflows/ci.yml`): gira solo sulle pull request verso `main` e sui push su `main` (cioè i merge).
+Job `check` (typecheck, lint, format check, build) e poi job `e2e` (smoke test Playwright), con Node 22 (`.nvmrc`).
+Se gli e2e falliscono, il report Playwright è scaricabile come artifact della run.
+Flusso di lavoro: branch dedicato → pull request verso `main` → CI verde → merge (fatto dall'utente).
+
+`?debug` nell'URL mostra le hitbox ed espone `window.game`. `?e2e` espone solo l'API di test `window.__boc`.
+
+### Smoke test e2e e API di test
+
+- I test stanno in `tests/e2e/` e parlano **solo** con `GameDriver` (`tests/e2e/support/`), che a sua volta usa
+  l'API `window.__boc` definita in `src/debug/testHooks.ts` (`BocTestApi`, `TestState`).
+- L'API è un **contratto stabile**: il refactor deve mantenerla funzionante adattando `testHooks.ts`,
+  **non** modificando i test. Se un test va cambiato, chiedere prima all'utente.
+- Il clock è deterministico: `freeze()` ferma il loop reale, simula `Date.now()` e rende `Math.random` riproducibile;
+  il tempo avanza solo con `step(frames)`.
+- Gli hook che servono solo ai test vivono in `GameScene` come metodi `debug*` e si chiamano solo da `testHooks.ts`.
 
 ---
 
@@ -71,8 +93,11 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
 
 ## Roadmap
 
-- [ ] **Fase 1, fondamenta**: ESLint + Prettier, Vitest, husky, CI GitHub Actions (typecheck, lint, test, build)
+- [x] **Fase 1a, strumenti**: Prettier, ESLint, CI GitHub Actions su `main`
+- [x] **Fase 1b, rete di sicurezza**: smoke test e2e con Playwright (avvio → livello → boss → vittoria / game over → riprova, zero errori in console), in CI
 - [ ] **Fase 2, refactor architettura**: core/, systems/, EventBus, StateMachine, Pool, contenuti in JSON. Il gameplay deve restare identico.
+  Gli unit test (Vitest) si scrivono **insieme ai nuovi moduli**, non sul codice vecchio che verrà spostato.
+  Dopo ogni passo deve passare lo smoke test e2e.
 - [ ] **Fase 3, pipeline contenuti**: livello 1 in Tiled, poi spritesheet Aseprite
 - [ ] **Fase 4, audio**: musiche dell'utente riarrangiate in chiptune (2 pulse + triangle + noise)
 - [ ] **Fase 5, deploy**: build pubblica (itch.io o GitHub Pages)

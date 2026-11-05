@@ -25,17 +25,22 @@ export class Chierichetto extends Enemy {
     const dx = p.x - this.x;
     const dist = Math.abs(dx);
     this.faceTowards(p.x);
-    if (time < this.throwingUntil) { body.setVelocityX(0); return; }
+    if (time < this.throwingUntil) {
+      body.setVelocityX(0);
+      return;
+    }
     let vx = 0;
     if (dist > 110) vx = Math.sign(dx) * 58;
     else if (dist < 60) vx = -Math.sign(dx) * 48;
     body.setVelocityX(vx);
-    if (vx !== 0) this.play('chierichetto-walk', true); else this.stop().setFrame(0);
+    if (vx !== 0) this.play('chierichetto-walk', true);
+    else this.stop().setFrame(0);
     if (time > this.nextThrow && dist < 220) {
       this.nextThrow = time + 1600 + Math.random() * 900;
       this.throwingUntil = time + 300;
       this.stop().setFrame(2);
-      const sx = this.x + this.facing * 6, sy = this.y - 21;
+      const sx = this.x + this.facing * 6,
+        sy = this.y - 21;
       const [vxB, vyB] = EnemyBullet.lob(sx, sy, p.x, p.y - 14, 0.85, EnemyBullet.gravityOf('ostia'));
       this.gs.addEnemyBullet(new EnemyBullet(this.gs, 'ostia', sx, sy, vxB, vyB));
       sfx.ostia();
@@ -47,7 +52,7 @@ export class Chierichetto extends Enemy {
 export class Beghina extends Enemy {
   protected readonly deadFrame = 4;
   protected readonly score = 150;
-  protected readonly screams = ['MALEDUCATO!', 'SANTA PAZIENZA!', 'AIUTO, UN CICCIONE!', 'PREGHERO\' PER TE!'] as const;
+  protected readonly screams = ['MALEDUCATO!', 'SANTA PAZIENZA!', 'AIUTO, UN CICCIONE!', "PREGHERO' PER TE!"] as const;
   private phase: 'walk' | 'windup' | 'whip' = 'walk';
   private stateUntil = 0;
   private hitDone = false;
@@ -87,7 +92,10 @@ export class Beghina extends Enemy {
         const reach = new Phaser.Geom.Rectangle(this.facing > 0 ? this.x : this.x - 18, this.y - 18, 18, 10);
         if (Phaser.Geom.Rectangle.Overlaps(reach, p.getBounds())) p.hurt(this.x);
       }
-      if (time > this.stateUntil) { this.phase = 'walk'; this.stateUntil = time + 700; }
+      if (time > this.stateUntil) {
+        this.phase = 'walk';
+        this.stateUntil = time + 700;
+      }
     }
   }
 }
@@ -96,7 +104,7 @@ export class Beghina extends Enemy {
 export class Sacrestano extends Enemy {
   protected readonly deadFrame = 2;
   protected readonly score = 200;
-  protected readonly screams = ['UFFA!', 'L\'INCENSO NO!', 'CHIAMO IL PARROCO!'] as const;
+  protected readonly screams = ['UFFA!', "L'INCENSO NO!", 'CHIAMO IL PARROCO!'] as const;
   private nextPuff = 0;
 
   constructor(gs: GameScene, x: number, y: number) {
@@ -113,7 +121,8 @@ export class Sacrestano extends Enemy {
     body.setVelocityX(Math.abs(dx) > 120 ? Math.sign(dx) * 22 : 0);
     if (time > this.nextPuff && Math.abs(dx) < 240) {
       this.nextPuff = time + 2600 + Math.random() * 800;
-      const sx = this.x + this.facing * 12, sy = this.y - 14;
+      const sx = this.x + this.facing * 12,
+        sy = this.y - 14;
       const ang = Math.atan2(p.y - 16 - sy, p.x - sx);
       this.gs.addEnemyBullet(new EnemyBullet(this.gs, 'fumo', sx, sy, Math.cos(ang) * 42, Math.sin(ang) * 42));
       sfx.smoke();

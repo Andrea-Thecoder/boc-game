@@ -42,7 +42,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private wasOnGround = true;
   private fallSpeed = 0;
 
-  constructor(private gs: GameScene, x: number, y: number) {
+  constructor(
+    private gs: GameScene,
+    x: number,
+    y: number,
+  ) {
     super(gs, x, y, 'paolone-legs', 0);
     gs.add.existing(this);
     gs.physics.add.existing(this);
@@ -88,8 +92,14 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (!c.jump && body.velocity.y < -120) body.setVelocityY(body.velocity.y * 0.85); // variable jump height
 
     // keep inside the visible area (no going back, Metal Slug style)
-    if (this.x < this.minX) { this.x = this.minX; body.setVelocityX(Math.max(0, body.velocity.x)); }
-    if (this.x > this.maxX) { this.x = this.maxX; body.setVelocityX(Math.min(0, body.velocity.x)); }
+    if (this.x < this.minX) {
+      this.x = this.minX;
+      body.setVelocityX(Math.max(0, body.velocity.x));
+    }
+    if (this.x > this.maxX) {
+      this.x = this.maxX;
+      body.setVelocityX(Math.min(0, body.velocity.x));
+    }
 
     // landing thud: Paolone is heavy
     if (ground && !this.wasOnGround && this.fallSpeed > 260) {

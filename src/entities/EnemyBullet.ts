@@ -23,7 +23,11 @@ export class EnemyBullet extends Phaser.Physics.Arcade.Sprite {
     this.setVelocity(vx, vy).setDepth(55);
     this.solid = kind !== 'fumo';
     if (kind === 'ostia') this.setAngularVelocity(vx > 0 ? 600 : -600);
-    if (kind === 'fumo') { this.play('fumo'); body.setSize(10, 9).setOffset(3, 3); this.setAlpha(0.9); }
+    if (kind === 'fumo') {
+      this.play('fumo');
+      body.setSize(10, 9).setOffset(3, 3);
+      this.setAlpha(0.9);
+    }
     if (kind === 'campana') body.setSize(9, 11).setOffset(2, 2);
   }
 

@@ -4,7 +4,7 @@ import { clean } from '../art/font';
 import { audio } from '../audio/engine';
 import { music } from '../audio/music';
 import { sfx } from '../audio/sfx';
-import { EnemyBullet } from '../entities/EnemyBullet';
+import { type EnemyBullet } from '../entities/EnemyBullet';
 import { Pickup, type PickupKind } from '../entities/Pickup';
 import { Player } from '../entities/Player';
 import type { Sukkino } from '../entities/Sukkino';
@@ -70,8 +70,14 @@ export default class GameScene extends Phaser.Scene {
     this.add.image(0, 0, 'bg-sky').setOrigin(0).setScrollFactor(0).setDepth(-100);
     this.hills = this.add.tileSprite(0, 0, W, H, 'bg-hills').setOrigin(0).setScrollFactor(0).setDepth(-90);
     this.houses = this.add.tileSprite(0, 0, W, H, 'bg-houses').setOrigin(0).setScrollFactor(0).setDepth(-80);
-    this.add.image(BOSS_ARENA_X + 175, GROUND_Y + 2, 'chiesa').setOrigin(0.5, 1).setDepth(-70);
-    this.add.tileSprite(0, GROUND_Y, LEVEL_WIDTH, H - GROUND_Y, 'ground').setOrigin(0).setDepth(10);
+    this.add
+      .image(BOSS_ARENA_X + 175, GROUND_Y + 2, 'chiesa')
+      .setOrigin(0.5, 1)
+      .setDepth(-70);
+    this.add
+      .tileSprite(0, GROUND_Y, LEVEL_WIDTH, H - GROUND_Y, 'ground')
+      .setOrigin(0)
+      .setDepth(10);
 
     // solids
     this.ground = this.physics.add.staticGroup();
@@ -92,7 +98,12 @@ export default class GameScene extends Phaser.Scene {
     this.buildEffects();
     this.setupCollisions();
 
-    this.pauseText = this.add.bitmapText(W / 2, H / 2, 'pxo', 'PAUSA', 14).setOrigin(0.5).setScrollFactor(0).setDepth(2000).setVisible(false);
+    this.pauseText = this.add
+      .bitmapText(W / 2, H / 2, 'pxo', 'PAUSA', 14)
+      .setOrigin(0.5)
+      .setScrollFactor(0)
+      .setDepth(2000)
+      .setVisible(false);
     this.input.keyboard!.on('keydown-M', () => audio.toggleMute());
 
     this.scene.launch('hud');
@@ -100,11 +111,17 @@ export default class GameScene extends Phaser.Scene {
     music.play('level');
 
     // mission card + opening line
-    const card = this.add.bitmapText(W / 2, 58, 'pxo', clean(`MISSIONE 1\n${LEVEL1.name}`), 7)
-      .setOrigin(0.5).setCenterAlign().setScrollFactor(0).setDepth(2000).setTint(0xe8b830);
+    const card = this.add
+      .bitmapText(W / 2, 58, 'pxo', clean(`MISSIONE 1\n${LEVEL1.name}`), 7)
+      .setOrigin(0.5)
+      .setCenterAlign()
+      .setScrollFactor(0)
+      .setDepth(2000)
+      .setTint(0xe8b830);
     this.tweens.add({ targets: card, alpha: 0, delay: 2200, duration: 600, onComplete: () => card.destroy() });
     this.time.delayedCall(700, () =>
-      this.say(this.player, 'Monsignor Panza vuole conquistare il Vaticano? Prima deve passare da Paolone!', 2600));
+      this.say(this.player, 'Monsignor Panza vuole conquistare il Vaticano? Prima deve passare da Paolone!', 2600),
+    );
 
     if (DEBUG) this.physics.world.createDebugGraphic();
   }
@@ -116,10 +133,17 @@ export default class GameScene extends Phaser.Scene {
   private buildProps() {
     for (const p of LEVEL1.props) {
       const y = p.y ?? GROUND_Y + 1;
-      this.add.image(p.x, y, p.key).setOrigin(0.5, 1).setDepth(p.depth ?? 20);
+      this.add
+        .image(p.x, y, p.key)
+        .setOrigin(0.5, 1)
+        .setDepth(p.depth ?? 20);
       if (p.platform) this.addPlatform(p.x + p.platform.dx, p.platform.top, p.platform.w);
       if (p.key === 'cartello') {
-        this.add.bitmapText(p.x, y - 22, 'px', 'CHIAPPETONS', 6).setOrigin(0.5).setTint(0x120b16).setDepth(26);
+        this.add
+          .bitmapText(p.x, y - 22, 'px', 'CHIAPPETONS', 6)
+          .setOrigin(0.5)
+          .setTint(0x120b16)
+          .setDepth(26);
       }
     }
   }
@@ -135,17 +159,36 @@ export default class GameScene extends Phaser.Scene {
 
   private buildEffects() {
     const base = { emitting: false, lifespan: 500 };
-    this.dustEmitter = this.add.particles(0, 0, 'puff', {
-      ...base, speedX: { min: -60, max: 60 }, speedY: { min: -20, max: -5 }, scale: { start: 0.7, end: 0 },
-      alpha: { start: 0.6, end: 0 }, tint: 0xa9a192, lifespan: 450,
-    }).setDepth(80);
-    this.sparkEmitter = this.add.particles(0, 0, 'dot', {
-      ...base, speed: { min: 10, max: 45 }, scale: { start: 1, end: 0 }, tint: [0xe8b830, 0xf4efe4], lifespan: 600,
-    }).setDepth(80);
-    this.fireEmitter = this.add.particles(0, 0, 'puff', {
-      ...base, speed: { min: 30, max: 120 }, scale: { start: 1.8, end: 0 }, tint: [0xf08a1c, 0xe8b830, 0xb3242f, 0x4a4352],
-      lifespan: 700, gravityY: -60,
-    }).setDepth(80);
+    this.dustEmitter = this.add
+      .particles(0, 0, 'puff', {
+        ...base,
+        speedX: { min: -60, max: 60 },
+        speedY: { min: -20, max: -5 },
+        scale: { start: 0.7, end: 0 },
+        alpha: { start: 0.6, end: 0 },
+        tint: 0xa9a192,
+        lifespan: 450,
+      })
+      .setDepth(80);
+    this.sparkEmitter = this.add
+      .particles(0, 0, 'dot', {
+        ...base,
+        speed: { min: 10, max: 45 },
+        scale: { start: 1, end: 0 },
+        tint: [0xe8b830, 0xf4efe4],
+        lifespan: 600,
+      })
+      .setDepth(80);
+    this.fireEmitter = this.add
+      .particles(0, 0, 'puff', {
+        ...base,
+        speed: { min: 30, max: 120 },
+        scale: { start: 1.8, end: 0 },
+        tint: [0xf08a1c, 0xe8b830, 0xb3242f, 0x4a4352],
+        lifespan: 700,
+        gravityY: -60,
+      })
+      .setDepth(80);
   }
 
   private setupCollisions() {
@@ -165,9 +208,13 @@ export default class GameScene extends Phaser.Scene {
     ph.add.collider(this.sukkini, this.platforms, brickHitsSurface);
 
     ph.add.overlap(this.sukkini, this.enemies, (s, e) => {
-      const brick = s as Sukkino, enemy = e as Enemy;
+      const brick = s as Sukkino,
+        enemy = e as Enemy;
       if (!brick.active || enemy.dead) return;
-      if (enemy instanceof MonsignorPanza && !enemy.fighting) { brick.splat(); return; }
+      if (enemy instanceof MonsignorPanza && !enemy.fighting) {
+        brick.splat();
+        return;
+      }
       enemy.hurt(brick.damage, brick.x);
       brick.splat();
     });
@@ -271,7 +318,9 @@ export default class GameScene extends Phaser.Scene {
     const x = s.at === 'right' ? cam.scrollX + W + 14 : s.at === 'left' ? cam.scrollX - 14 : s.at;
     const y = (s.y ?? GROUND_Y) - 1;
     const ctor: Record<EnemyType, new (gs: GameScene, x: number, y: number) => Enemy> = {
-      chierichetto: Chierichetto, beghina: Beghina, sacrestano: Sacrestano,
+      chierichetto: Chierichetto,
+      beghina: Beghina,
+      sacrestano: Sacrestano,
     };
     this.addEnemy(new ctor[s.type](this, x, y));
   }
@@ -319,7 +368,8 @@ export default class GameScene extends Phaser.Scene {
     music.play('victory');
     this.player.frozen = true;
     this.time.delayedCall(600, () =>
-      this.say(this.player, 'Il Vaticano può dormire tranquillo. Ora però mi serve un succhino per me.', 3000));
+      this.say(this.player, 'Il Vaticano può dormire tranquillo. Ora però mi serve un succhino per me.', 3000),
+    );
     this.time.delayedCall(5200, () => this.endScene('victory'));
   }
 
@@ -327,9 +377,15 @@ export default class GameScene extends Phaser.Scene {
   // events from entities
   // -------------------------------------------------------------------------------------------
 
-  addSukkino(s: Sukkino) { this.sukkini.add(s); }
-  addEnemyBullet(b: EnemyBullet) { this.enemyBullets.add(b); }
-  addEnemy(e: Enemy) { this.enemies.add(e); }
+  addSukkino(s: Sukkino) {
+    this.sukkini.add(s);
+  }
+  addEnemyBullet(b: EnemyBullet) {
+    this.enemyBullets.add(b);
+  }
+  addEnemy(e: Enemy) {
+    this.enemies.add(e);
+  }
 
   aliveEnemies(): number {
     return this.enemies.getChildren().filter((e) => !(e as Enemy).dead && !(e as Enemy).isBoss).length;
@@ -380,6 +436,28 @@ export default class GameScene extends Phaser.Scene {
     k.destroy();
   }
 
+  // -------------------------------------------------------------------------------------------
+  // debug / test hooks: used only by src/debug/testHooks.ts (?e2e, ?debug)
+  // -------------------------------------------------------------------------------------------
+
+  /** Skips every wave and puts Paolone just before the boss arena. */
+  debugSkipToBossArena() {
+    this.waveIdx = LEVEL1.waves.length;
+    this.cameras.main.scrollX = BOSS_ARENA_X - 120;
+    this.player.setPosition(BOSS_ARENA_X - 40, GROUND_Y - 1);
+  }
+
+  debugGodMode() {
+    this.player.maxHp = 999;
+    this.player.hp = 999;
+    this.syncHud();
+  }
+
+  debugKillPlayer() {
+    this.player.hp = 1;
+    this.player.hurt(this.player.x + 10);
+  }
+
   onPlayerDeath() {
     if (this.finished) return;
     this.finished = true;
@@ -414,24 +492,37 @@ export default class GameScene extends Phaser.Scene {
     const yOff = isPlayer ? 38 : target instanceof MonsignorPanza ? 66 : target instanceof Enemy ? 30 : 4;
     const b = new Bubble(this, target, isPlayer ? kappa(text) : text, yOff, duration, { shout });
     this.bubbles.set(target, b);
-    b.once(Phaser.GameObjects.Events.DESTROY, () => { if (this.bubbles.get(target) === b) this.bubbles.delete(target); });
+    b.once(Phaser.GameObjects.Events.DESTROY, () => {
+      if (this.bubbles.get(target) === b) this.bubbles.delete(target);
+    });
   }
 
   splash(x: number, y: number, color: number, n = 9) {
     let em = this.splashEmitters.get(color);
     if (!em) {
-      em = this.add.particles(0, 0, 'dot', {
-        emitting: false, speed: { min: 40, max: 130 }, angle: { min: 200, max: 340 }, gravityY: 420,
-        lifespan: 520, scale: { start: 1, end: 0.4 }, tint: color,
-      }).setDepth(80);
+      em = this.add
+        .particles(0, 0, 'dot', {
+          emitting: false,
+          speed: { min: 40, max: 130 },
+          angle: { min: 200, max: 340 },
+          gravityY: 420,
+          lifespan: 520,
+          scale: { start: 1, end: 0.4 },
+          tint: color,
+        })
+        .setDepth(80);
       this.splashEmitters.set(color, em);
     }
     em.explode(n, x, y);
     if (n > 5) sfx.splash();
   }
 
-  dust(x: number, y: number) { this.dustEmitter.explode(6, x, y); }
-  sparkle(x: number, y: number, n = 3) { this.sparkEmitter.explode(n, x, y); }
+  dust(x: number, y: number) {
+    this.dustEmitter.explode(6, x, y);
+  }
+  sparkle(x: number, y: number, n = 3) {
+    this.sparkEmitter.explode(n, x, y);
+  }
   explosion(x: number, y: number) {
     this.fireEmitter.explode(14, x, y);
     this.sparkEmitter.explode(6, x, y);

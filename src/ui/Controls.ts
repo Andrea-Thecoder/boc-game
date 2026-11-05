@@ -4,20 +4,41 @@ const K = Phaser.Input.Keyboard.KeyCodes;
 
 /** Keyboard (arrows/WASD + Z X C, or K J L) and gamepad, merged into one state per frame. */
 export class Controls {
-  left = false; right = false; up = false; down = false;
-  jump = false; fire = false; panza = false;
-  jumpPressed = false; panzaPressed = false; pausePressed = false;
-  private prevJump = false; private prevPanza = false; private prevPause = false;
+  left = false;
+  right = false;
+  up = false;
+  down = false;
+  jump = false;
+  fire = false;
+  panza = false;
+  jumpPressed = false;
+  panzaPressed = false;
+  pausePressed = false;
+  private prevJump = false;
+  private prevPanza = false;
+  private prevPause = false;
   private keys: Record<string, Phaser.Input.Keyboard.Key>;
 
   constructor(private scene: Phaser.Scene) {
     const kb = scene.input.keyboard!;
     this.keys = kb.addKeys({
-      left: K.LEFT, right: K.RIGHT, up: K.UP, down: K.DOWN,
-      a: K.A, d: K.D, w: K.W, s: K.S,
-      z: K.Z, x: K.X, c: K.C, space: K.SPACE,
-      j: K.J, k: K.K, l: K.L,
-      p: K.P, esc: K.ESC,
+      left: K.LEFT,
+      right: K.RIGHT,
+      up: K.UP,
+      down: K.DOWN,
+      a: K.A,
+      d: K.D,
+      w: K.W,
+      s: K.S,
+      z: K.Z,
+      x: K.X,
+      c: K.C,
+      space: K.SPACE,
+      j: K.J,
+      k: K.K,
+      l: K.L,
+      p: K.P,
+      esc: K.ESC,
     }) as Record<string, Phaser.Input.Keyboard.Key>;
   }
 

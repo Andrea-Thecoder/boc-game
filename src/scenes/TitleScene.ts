@@ -23,28 +23,64 @@ export default class TitleScene extends Phaser.Scene {
     this.add.tileSprite(0, GROUND_Y, W, H - GROUND_Y, 'ground').setOrigin(0);
     this.tweens.add({ targets: houses, tilePositionX: 512, duration: 60000, repeat: -1 });
 
-    const title = this.add.bitmapText(W / 2, 14, 'pxo', 'PAOLONE', 21).setOrigin(0.5, 0).setTint(0xe8b830);
+    const title = this.add
+      .bitmapText(W / 2, 14, 'pxo', 'PAOLONE', 21)
+      .setOrigin(0.5, 0)
+      .setTint(0xe8b830);
     this.add.bitmapText(W / 2, 44, 'pxo', 'CONTRO', 7).setOrigin(0.5, 0);
-    this.add.bitmapText(W / 2, 55, 'pxo', 'MONSIGNOR PANZA', 14).setOrigin(0.5, 0).setTint(0xe2685a);
+    this.add
+      .bitmapText(W / 2, 55, 'pxo', 'MONSIGNOR PANZA', 14)
+      .setOrigin(0.5, 0)
+      .setTint(0xe2685a);
     this.tweens.add({ targets: title, y: 12, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
 
     // Paolone, ready to throw
     const px = 70;
-    this.add.sprite(px, GROUND_Y + 1, 'paolone-legs', 0).setOrigin(0.5, 1).setScale(2).setDepth(5);
-    const torso = this.add.sprite(px, GROUND_Y + 1, 'paolone-torso', TORSO.windup).setOrigin(0.5, 1).setScale(2).setDepth(6);
-    this.time.addEvent({ delay: 700, loop: true, callback: () => torso.setFrame(torso.frame.name === String(TORSO.windup) ? TORSO.fwd : TORSO.windup) });
+    this.add
+      .sprite(px, GROUND_Y + 1, 'paolone-legs', 0)
+      .setOrigin(0.5, 1)
+      .setScale(2)
+      .setDepth(5);
+    const torso = this.add
+      .sprite(px, GROUND_Y + 1, 'paolone-torso', TORSO.windup)
+      .setOrigin(0.5, 1)
+      .setScale(2)
+      .setDepth(6);
+    this.time.addEvent({
+      delay: 700,
+      loop: true,
+      callback: () => torso.setFrame(torso.frame.name === String(TORSO.windup) ? TORSO.fwd : TORSO.windup),
+    });
 
     // the villain
-    this.add.image(258, GROUND_Y + 1, 'panza', 1).setOrigin(0.5, 1).setDepth(5);
-    this.add.sprite(200, GROUND_Y + 1, 'chierichetto', 0).setOrigin(0.5, 1).setFlipX(true).play('chierichetto-walk');
-    this.add.sprite(222, GROUND_Y + 1, 'beghina', 0).setOrigin(0.5, 1).setFlipX(true).play('beghina-walk');
+    this.add
+      .image(258, GROUND_Y + 1, 'panza', 1)
+      .setOrigin(0.5, 1)
+      .setDepth(5);
+    this.add
+      .sprite(200, GROUND_Y + 1, 'chierichetto', 0)
+      .setOrigin(0.5, 1)
+      .setFlipX(true)
+      .play('chierichetto-walk');
+    this.add
+      .sprite(222, GROUND_Y + 1, 'beghina', 0)
+      .setOrigin(0.5, 1)
+      .setFlipX(true)
+      .play('beghina-walk');
 
     this.prompt = this.add.bitmapText(W / 2, 92, 'pxo', '', 7).setOrigin(0.5, 0);
     this.setPrompt();
     this.tweens.add({ targets: this.prompt, alpha: 0.2, duration: 500, yoyo: true, repeat: -1 });
-    this.add.bitmapText(W / 2, H - 9, 'px', 'FRECCE MUOVI  Z SALTA  X SUKKINO  C PANZATA', 6).setOrigin(0.5, 0).setTint(0xd9d2c3).setDepth(10);
+    this.add
+      .bitmapText(W / 2, H - 9, 'px', 'FRECCE MUOVI  Z SALTA  X SUKKINO  C PANZATA', 6)
+      .setOrigin(0.5, 0)
+      .setTint(0xd9d2c3)
+      .setDepth(10);
 
-    this.time.delayedCall(1200, () => new Bubble(this, { x: px + 8, y: GROUND_Y - 4 }, kappa('Chiappetons non si tocca!'), 70, 2400));
+    this.time.delayedCall(
+      1200,
+      () => new Bubble(this, { x: px + 8, y: GROUND_Y - 4 }, kappa('Chiappetons non si tocca!'), 70, 2400),
+    );
 
     this.input.keyboard!.on('keydown', (e: KeyboardEvent) => this.onKey(e.code));
     this.input.on('pointerdown', () => this.onKey('Enter'));
@@ -64,7 +100,10 @@ export default class TitleScene extends Phaser.Scene {
       this.setPrompt();
       return;
     }
-    if (code === 'KeyM') { audio.toggleMute(); return; }
+    if (code === 'KeyM') {
+      audio.toggleMute();
+      return;
+    }
     if (['Enter', 'Space', 'KeyZ', 'KeyX'].includes(code)) {
       sfx.select();
       music.stop();

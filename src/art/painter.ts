@@ -9,7 +9,10 @@ export class Painter {
   ox = 0;
   oy = 0;
 
-  constructor(readonly width: number, readonly height: number) {
+  constructor(
+    readonly width: number,
+    readonly height: number,
+  ) {
     this.canvas = document.createElement('canvas');
     this.canvas.width = width;
     this.canvas.height = height;
@@ -62,16 +65,27 @@ export class Painter {
 
   /** Bresenham line with given thickness (square brush). */
   line(x0: number, y0: number, x1: number, y1: number, c: string, t = 1): this {
-    x0 = Math.round(x0); y0 = Math.round(y0); x1 = Math.round(x1); y1 = Math.round(y1);
-    const dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
-    const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+    x0 = Math.round(x0);
+    y0 = Math.round(y0);
+    x1 = Math.round(x1);
+    y1 = Math.round(y1);
+    const dx = Math.abs(x1 - x0),
+      dy = -Math.abs(y1 - y0);
+    const sx = x0 < x1 ? 1 : -1,
+      sy = y0 < y1 ? 1 : -1;
     let err = dx + dy;
     for (;;) {
       this.rect(x0 - Math.floor(t / 2), y0 - Math.floor(t / 2), t, t, c);
       if (x0 === x1 && y0 === y1) break;
       const e2 = 2 * err;
-      if (e2 >= dy) { err += dy; x0 += sx; }
-      if (e2 <= dx) { err += dx; y0 += sy; }
+      if (e2 >= dy) {
+        err += dy;
+        x0 += sx;
+      }
+      if (e2 <= dx) {
+        err += dx;
+        y0 += sy;
+      }
     }
     return this;
   }
@@ -106,8 +120,7 @@ export class Painter {
   outline(color = '#1a0f1f', x = 0, y = 0, w = this.width, h = this.height): this {
     const img = this.ctx.getImageData(x, y, w, h);
     const d = img.data;
-    const solid = (i: number, j: number) =>
-      i >= 0 && j >= 0 && i < w && j < h && d[(j * w + i) * 4 + 3] > 0;
+    const solid = (i: number, j: number) => i >= 0 && j >= 0 && i < w && j < h && d[(j * w + i) * 4 + 3] > 0;
     const marks: [number, number][] = [];
     for (let j = 0; j < h; j++) {
       for (let i = 0; i < w; i++) {
