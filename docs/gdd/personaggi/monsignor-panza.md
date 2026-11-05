@@ -3,13 +3,14 @@
 > Prete di 88 anni, corrotto e cattivo, vuole conquistare il Vaticano partendo da Chiappetons.
 
 ## Identità
-- **Nome completo / soprannomi**: Monsignor Angelius Panza
+- **Nome completo**: Monsignor Angelius Panza
+- **soprannome**: Il falso Don
 - **Età**: 88 anni
 - **Ruolo nel gioco**: antagonista principale, boss del livello 1 (fugge e tornerà)
 - **Dove si trova**: la chiesa di Chiappetons
 
 ## Aspetto
-Vecchio, gonfio, naso rosso, sopracciglia bianche furiose, mitra bianca e oro, paramenti rossi.
+Vecchio, gonfio, naso rosso, sopracciglia bianche furiose, vestiti da monsignore neri e viola.
 Guida una papamobile corazzata con la cupola di vetro e un cannone ad acqua santa.
 
 ## Personalità
@@ -23,7 +24,7 @@ _Da scrivere: come è diventato corrotto? Perché proprio il Vaticano?_
 
 ## Relazioni
 - **I suoi fedeli**: chierichetti, beghine, sacrestani.
-- **Con Paolone**: lo chiama "ciccione".
+- **Con Paolone**: lo chiama "ciccione","obesone","cesso a pedali mobile".
 
 ## In partita
 - **Fase 1**: getti di acqua santa

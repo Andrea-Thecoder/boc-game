@@ -3,14 +3,14 @@
 > Ragazzone obesone di Chiappetons. Combatte lanciando succhini di frutta e parla con le K al posto delle C.
 
 ## Identità
-- **Nome completo / soprannomi**: Paolone (nome completo: _da decidere_)
-- **Età**: _da decidere_
+- **Nome completo**: Paolone (nome completo: _da decidere_)
+- **Età**: 12
 - **Ruolo nel gioco**: protagonista
 - **Dove si trova**: Chiappetons
 
 ## Aspetto
-Enorme, pancia che esce dalla canottiera bianca macchiata di succo, pantaloncini blu, ciabatte verdi,
-capelli corti scuri, barba incolta, guance rosse.
+Enorme obesone, pancia che esce dalla canottiera bianca macchiata di succo, pantaloncini blu, ciabatte verdi,
+capelli corti scuri, guance rosse.
 
 ## Personalità
 _Da scrivere._

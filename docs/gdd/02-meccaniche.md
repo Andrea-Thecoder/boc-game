@@ -1,7 +1,7 @@
 # Meccaniche (stato del prototipo v0.1)
 
 ## Comandi
-Frecce/WASD per muoversi e mirare, Z salta (giù + Z scende dai balconi), X lancia, C panzata, P pausa, M muto.
+Frecce/WASD per muoversi e mirare, barra spaziatrice salta (giù + salta scende dai balconi), Q lancia, E panzata, P pausa, M muto.
 
 ## Armi
 | Succhino | Effetto | Munizioni |
@@ -20,4 +20,4 @@ Frecce/WASD per muoversi e mirare, Z salta (giù + Z scende dai balconi), X lanc
 | Monsignor Panza (boss) | 110 | 3 fasi, vedi la sua scheda |
 
 ## Vita e cure
-5 cuori. Il panzerotto ridà 2 cuori.
+6 cuori. Il panzerotto ridà 3 cuori.

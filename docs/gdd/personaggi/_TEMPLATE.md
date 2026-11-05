@@ -3,7 +3,8 @@
 > Una frase che lo riassume. Esempio: "Ragazzone obesone di Chiappetons, combatte a colpi di succhini di frutta."
 
 ## Identità
-- **Nome completo / soprannomi**:
+- **Nome completo**:
+- **soprannomi**:
 - **Età**:
 - **Ruolo nel gioco**: protagonista / boss / nemico comune / PNG alleato / comparsa
 - **Dove si trova**: livello, luogo di Chiappetons
