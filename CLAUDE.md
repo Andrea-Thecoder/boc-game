@@ -1,0 +1,106 @@
+# BOC Game: "Paolone contro Monsignor Panza"
+
+Run-and-gun 2D a scorrimento laterale in pixel art, tono comico. Ambientazione: **Chiappetons**, paesino del Sud Italia.
+Stack: **Phaser 3 + TypeScript (strict) + Vite**. Risoluzione interna 320x180, scalata.
+
+Questo file è il riferimento per gli agenti: descrive **come il progetto DEVE funzionare** (architettura target),
+lo stato attuale e le trappole già scoperte. Va aggiornato ogni volta che una decisione cambia.
+
+Lore, personaggi e meccaniche stanno nel GDD (`docs/gdd/`). Il GDD è la fonte di verità del design:
+se il codice e il GDD divergono, chiedere all'utente quale dei due va aggiornato.
+
+## Comandi
+
+```bash
+npm run dev        # dev server
+npm run typecheck  # tsc --noEmit
+npm run build      # typecheck + build in dist/
+```
+
+`?debug` nell'URL mostra le hitbox ed espone `window.game`.
+
+---
+
+## Architettura target
+
+### Strati e responsabilità
+
+```
+src/
+  core/       infrastruttura senza logica di gioco: EventBus tipizzato, StateMachine, Pool, Save, Settings
+  systems/    logica di gioco trasversale: Spawn, Combat, Camera, Fx, Dialogue, Score/Telemetry
+  entities/   attori: player/, enemies/, bosses/, projectiles/, pickups/
+  scenes/     SOLO orchestrazione: crea i sistemi, collega gli eventi, avvia e ferma la musica
+  ui/         HUD, fumetti, menu, input
+  content/    dati di gioco in JSON validati: armi, nemici, dialoghi
+  art/ audio/ generazione procedurale e caricamento degli asset
+assets/       mappe Tiled (.tmj), spritesheet Aseprite, audio
+tests/        unit/ (Vitest), e2e/ (Playwright)
+docs/         gdd/, adr/ (decisioni architetturali), roadmap
+```
+
+### Regole
+
+1. **Le scene non contengono logica di gioco.** Una scena istanzia i sistemi e li collega. Se un metodo di una scena
+   decide qualcosa sul gameplay (danni, ondate, punteggio), va spostato in un sistema.
+2. **Le entità non chiamano la scena.** Comunicano emettendo eventi sull'EventBus tipizzato
+   (`enemy:killed`, `player:hurt`, `weapon:changed`, `boss:phase` e così via). I sistemi si iscrivono agli eventi.
+   La mappa degli eventi è un unico tipo TS (`GameEvents`), così payload ed emettitori sono controllati a compile time.
+3. **L'IA è una macchina a stati** (`core/StateMachine`), con stati espliciti tipo `walk → windup → attack → cooldown`.
+   Niente `if` sparsi su timer multipli.
+4. **Data-driven.** Statistiche di armi e nemici, ondate, dialoghi e livelli stanno in dati (JSON / Tiled), non nel codice.
+   Il codice definisce i *comportamenti*, i dati i *numeri*. Il bilanciamento non deve richiedere modifiche alla logica.
+5. **Dialoghi in file di contenuto** (`content/dialoghi/<personaggio>.json`). La parlata con le K di Paolone è una
+   trasformazione automatica (`kappa()`), non va mai scritta a mano nei testi.
+6. **Pooling** per proiettili, particelle e popup: niente `new` per ogni sukkino in un loop di gioco.
+7. **Telemetria dietro un'interfaccia** (`systems/Telemetry`): oggi salva in locale, domani invia al backend.
+   Il gioco deve funzionare offline.
+8. **Costanti in `config.ts`**, mai numeri magici duplicati tra file.
+
+---
+
+## Stato attuale (prototipo v0.1)
+
+Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over. **Non segue ancora l'architettura target**:
+
+- `scenes/GameScene.ts` è una god class: camera, ondate, collisioni, effetti, boss, HUD sync. → da spezzare nei sistemi
+- Le entità ricevono `GameScene` e ne chiamano i metodi. → da sostituire con l'EventBus
+- L'IA usa campi `phase`/`stateUntil` ad hoc. → da migrare su StateMachine
+- Livello, armi e nemici sono in TS (`level/level1.ts`, `weapons.ts`). → JSON e Tiled
+- Grafica e audio sono interamente procedurali (`art/`, `audio/`). Restano come segnaposto finché non arriva la pixel art vera.
+
+## Roadmap
+
+- [ ] **Fase 1, fondamenta**: ESLint + Prettier, Vitest, husky, CI GitHub Actions (typecheck, lint, test, build)
+- [ ] **Fase 2, refactor architettura**: core/, systems/, EventBus, StateMachine, Pool, contenuti in JSON. Il gameplay deve restare identico.
+- [ ] **Fase 3, pipeline contenuti**: livello 1 in Tiled, poi spritesheet Aseprite
+- [ ] **Fase 4, audio**: musiche dell'utente riarrangiate in chiptune (2 pulse + triangle + noise)
+- [ ] **Fase 5, deploy**: build pubblica (itch.io o GitHub Pages)
+- [ ] **Fase 6, backend**: API per run, punteggi e audit (repo separato), client Telemetry collegato
+
+---
+
+## Trappole già scoperte (non ripeterle)
+
+- **Font retro di Phaser**: la `size` di `bitmapText` è riferita alla **larghezza** della cella, non all'altezza.
+  Font `px` (cella 6x8) → size 6, 12…; font `pxo` (cella 7x9) → size 7, 14, 21. Altri valori li scalano in modo sbagliato.
+- **`useDefineForClassFields`**: un campo di una sottoclasse con lo stesso nome di una proprietà Phaser la sovrascrive
+  (es. `state` su un GameObject). Usare nomi univoci (`phase`, `mode`).
+- **Gruppi fisici Arcade**: `physics.add.group().add(sprite)` resetta velocità e gravità del body. Per entità già
+  configurate usare gruppi semplici (`this.add.group()`): i collider funzionano lo stesso.
+- **Hitbox e flipX**: l'offset del body Arcade non si specchia da solo. Usare `Enemy.setBodyBox()`, che lo ricalcola.
+- **Nemici fuori camera**: `Enemy.preUpdate` ferma l'IA oltre ±60px dalla camera. Spawn e ingressi del boss devono
+  stare entro quel margine, altrimenti restano immobili.
+- **Test nel browser**: con il pannello in background il RAF è fermo. Per i test usare `game.loop.sleep()` e
+  `game.step(t, 16.67)` a mano. Le tween di Phaser usano `Date.now()`, quindi va simulato anche quello.
+- **Audio**: l'AudioContext parte solo dopo un gesto dell'utente (gestito dal title screen).
+
+## Convenzioni
+
+- **Git: gli agenti NON fanno MAI commit né push.** Commit e push li fa solo l'utente. Un agente può preparare
+  le modifiche e proporre il messaggio di commit, ma non esegue `git commit`, `git push` o comandi che riscrivono la storia.
+  Repo: `https://github.com/Andrea-Thecoder/boc-game.git`, autore locale `Andrea-TheCoder`.
+- Lingua: codice e identificatori in inglese; testi di gioco, commenti di design e documentazione in italiano.
+- Commit convenzionali: `feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`.
+- Test: struttura AAA, una sola logica di assert per test, nessun `if`/`for` nel corpo, naming
+  `metodo_condizione_risultatoAtteso`. Unit test sulla logica pura, e2e per gli smoke test del gioco.
