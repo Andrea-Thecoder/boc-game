@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   check:
-    name: Typecheck, lint, format, build
+    name: Typecheck, lint, format, unit test, build
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -40,6 +40,9 @@ jobs:
 
       - name: Format check
         run: npm run format:check
+
+      - name: Unit tests
+        run: npm run test:unit
 
       - name: Build
         run: npx vite build

@@ -1,10 +1,9 @@
 import Phaser from 'phaser';
 import { GROUND_Y, H, W } from '../config';
-import { clean } from '../art/font';
 import { TORSO } from '../art/sprites';
 import { music } from '../audio/music';
 import { sfx } from '../audio/sfx';
-import { kappa, pick } from '../ui/text';
+import { clean, kappa, pick } from '../ui/text';
 
 interface Result {
   score: number;

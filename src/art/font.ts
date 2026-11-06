@@ -97,12 +97,3 @@ export function registerFonts(scene: Phaser.Scene) {
   build(scene, 'px', P.white, null);
   build(scene, 'pxo', P.white, P.black);
 }
-
-/** Uppercases and strips accents so any Italian string can be rendered with the glyph set. */
-export function clean(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toUpperCase()
-    .replace(/[^A-Z0-9 !'",\-.:?+/()<>~\n]/g, '');
-}

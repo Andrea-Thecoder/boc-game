@@ -16,3 +16,15 @@ export function kappa(text: string): string {
 export function pick<T>(list: readonly T[]): T {
   return list[Math.floor(Math.random() * list.length)];
 }
+
+/** Every character the pixel font can draw (see `art/font.ts`), plus newline. */
+const UNSUPPORTED = /[^A-Z0-9 !'",\-.:?+/()<>~\n]/g;
+
+/** Uppercases and strips accents so any Italian string can be rendered with the pixel font. */
+export function clean(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .replace(UNSUPPORTED, '');
+}

@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { BOSS_ARENA_X, DEBUG, GROUND_Y, H, LEVEL_WIDTH, W } from '../config';
-import { clean } from '../art/font';
 import { audio } from '../audio/engine';
 import { music } from '../audio/music';
 import { sfx } from '../audio/sfx';
@@ -14,7 +13,7 @@ import { MonsignorPanza } from '../entities/enemies/MonsignorPanza';
 import { LEVEL1, type EnemyType, type SpawnDef } from '../level/level1';
 import { Bubble, popText } from '../ui/Bubble';
 import { Controls } from '../ui/Controls';
-import { kappa, pick } from '../ui/text';
+import { clean, kappa, pick } from '../ui/text';
 import { WEAPONS } from '../weapons';
 
 type Emitter = Phaser.GameObjects.Particles.ParticleEmitter;

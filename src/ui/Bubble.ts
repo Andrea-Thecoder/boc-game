@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { clean } from '../art/font';
+import { clean } from './text';
 import { P } from '../art/palette';
 import { sfx } from '../audio/sfx';
 

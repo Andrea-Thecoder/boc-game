@@ -18,18 +18,27 @@ npm run lint          # ESLint (type-aware), lint:fix per correggere
 npm run format        # Prettier sul codice (i file .md sono esclusi di proposito)
 npm run format:check  # verifica formattazione senza modificare
 npm run build         # typecheck + build in dist/
-npm run check         # typecheck, lint, format:check, build
+npm run check         # typecheck, lint, format:check, test:unit, build
+npm run test:unit     # unit test Vitest (test:unit:watch in modalità watch)
 npm run test:e2e      # smoke test Playwright sulla build di produzione (test:e2e:ui per la modalità interattiva)
 ```
 
 Prima di considerare finito un lavoro devono passare `npm run check` **e** `npm run test:e2e`.
 
 **CI** (`.github/workflows/ci.yml`): gira solo sulle pull request verso `main` e sui push su `main` (cioè i merge).
-Job `check` (typecheck, lint, format check, build) e poi job `e2e` (smoke test Playwright), con Node 22 (`.nvmrc`).
+Job `check` (typecheck, lint, format check, unit test, build) e poi job `e2e` (smoke test Playwright), con Node 22 (`.nvmrc`).
 Se gli e2e falliscono, il report Playwright è scaricabile come artifact della run.
 Flusso di lavoro: branch dedicato → pull request verso `main` → CI verde → merge (fatto dall'utente).
 
 `?debug` nell'URL mostra le hitbox ed espone `window.game`. `?e2e` espone solo l'API di test `window.__boc`.
+
+### Unit test (Vitest)
+
+- Stanno in `tests/unit/`, rispecchiando la struttura di `src/` (es. `src/core/Pool.ts` → `tests/unit/core/Pool.test.ts`).
+- Girano in **Node**: un modulo testato a unità **non deve importare Phaser**, né direttamente né tramite i suoi import.
+  La logica pura va tenuta in moduli separati da quelli che usano Phaser (es. `clean()` sta in `ui/text.ts`, non in `art/font.ts`).
+- I casi con più input dello stesso comportamento usano `it.each` (è la versione parametrizzata, non un `for` nel test).
+- Le garanzie di tipo si testano con `// @ts-expect-error`: le verifica `npm run typecheck`, che include `tests/`.
 
 ### Smoke test e2e e API di test
 
@@ -89,15 +98,23 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
 - Le entità ricevono `GameScene` e ne chiamano i metodi. → da sostituire con l'EventBus
 - L'IA usa campi `phase`/`stateUntil` ad hoc. → da migrare su StateMachine
 - Livello, armi e nemici sono in TS (`level/level1.ts`, `weapons.ts`). → JSON e Tiled
+- `core/` è pronto (EventBus, StateMachine, Pool, testati) ma il gioco non lo usa ancora: il collegamento è nei passi 4-6.
 - Grafica e audio sono interamente procedurali (`art/`, `audio/`). Restano come segnaposto finché non arriva la pixel art vera.
 
 ## Roadmap
 
 - [x] **Fase 1a, strumenti**: Prettier, ESLint, CI GitHub Actions su `main`
 - [x] **Fase 1b, rete di sicurezza**: smoke test e2e con Playwright (avvio → livello → boss → vittoria / game over → riprova, zero errori in console), in CI
-- [ ] **Fase 2, refactor architettura**: core/, systems/, EventBus, StateMachine, Pool, contenuti in JSON. Il gameplay deve restare identico.
+- [ ] **Fase 2, refactor architettura** (branch `refactor/fase-2`). Il gameplay deve restare identico.
   Gli unit test (Vitest) si scrivono **insieme ai nuovi moduli**, non sul codice vecchio che verrà spostato.
-  Dopo ogni passo deve passare lo smoke test e2e.
+  Dopo ogni passo devono passare `npm run check` e lo smoke test e2e.
+  - [x] Passo 1: Vitest in CI, test di `kappa()` / `clean()` / `pick()`
+  - [x] Passo 2: `core/EventBus`, `core/StateMachine`, `core/Pool` con unit test (pronti, **non ancora usati dal gioco**)
+  - [ ] Passo 3: contenuti in JSON validati con zod (armi, nemici, livello 1, dialoghi)
+  - [ ] Passo 4: `GameScene` spezzata nei sistemi
+  - [ ] Passo 5: entità sull'EventBus, proiettili e popup in pool
+  - [ ] Passo 6: IA dei nemici e del boss su StateMachine
+  - [ ] Passo 7: Telemetry locale, `CLAUDE.md` e ADR
 - [ ] **Fase 3, pipeline contenuti**: livello 1 in Tiled, poi spritesheet Aseprite
 - [ ] **Fase 4, audio**: musiche dell'utente riarrangiate in chiptune (2 pulse + triangle + noise)
 - [ ] **Fase 5, deploy**: build pubblica (itch.io o GitHub Pages)
