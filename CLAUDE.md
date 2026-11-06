@@ -114,13 +114,16 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
 - `scenes/GameScene.ts` fa solo orchestrazione: costruisce il livello, crea i sistemi di `src/systems/`, collega eventi
   e musica. La logica sta nei sistemi (Camera, Fx, Dialogue, Spawn, Pickup, Combat, Score, BossArena, Run), le regole
   pure e testate in `systems/rules/`, gli eventi in `systems/events.ts` (`GameEvents`).
-- Le entità ricevono ancora `GameScene` e ne chiamano i metodi: in `GameScene` c'è una sezione **LEGACY ENTITY API**
-  che inoltra ogni chiamata a un sistema o emette un evento. → passo 5: le entità emettono eventi, la sezione sparisce.
-  **Non aggiungere nuovi metodi a quella sezione.**
+- Le entità non conoscono `GameScene`: ricevono `(scene: Phaser.Scene, bus: GameBus, ...)` e parlano col gioco solo
+  emettendo eventi. Possono usare le API Phaser della propria scena (`scene.time`, `scene.add`, `scene.tweens`), mai
+  metodi di gioco della scena. I sistemi invece possono chiamare i metodi delle entità (`player.heal()`, `boss.laugh()`).
+- Eventi (`systems/events.ts`) di due tipi: **fatti** al passato (`player:threw`, `enemy:fired`, `boss:damaged`...)
+  e **richieste di presentazione** (`fx:*`, `dialogue:say`) che non cambiano mai lo stato del gioco.
+- Sukkini e proiettili nemici sono in pool (`ProjectileSystem`), le scritte volanti in pool (`FxSystem`).
 - L'IA usa campi `phase`/`stateUntil` ad hoc. → da migrare su StateMachine
 - Contenuti già in JSON validati (armi, Paolone, nemici, boss, oggetti, livello 1, dialoghi). Il livello si scrive
   ancora a mano in JSON: passerà a Tiled nella fase 3.
-- `core/` è pronto (EventBus, StateMachine, Pool, testati) ma il gioco non lo usa ancora: il collegamento è nei passi 4-6.
+- `core/StateMachine` è pronta ma l'IA non la usa ancora (passo 6).
 - Grafica e audio sono interamente procedurali (`art/`, `audio/`). Restano come segnaposto finché non arriva la pixel art vera.
 
 ## Roadmap
@@ -134,7 +137,7 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
   - [x] Passo 2: `core/EventBus`, `core/StateMachine`, `core/Pool` con unit test (pronti, **non ancora usati dal gioco**)
   - [x] Passo 3: contenuti in JSON validati con zod (armi, Paolone, nemici, proiettili, boss, oggetti, livello 1, dialoghi)
   - [x] Passo 4: `GameScene` spezzata nei sistemi, `GameEvents` tipizzati, regole pure in `systems/rules/`
-  - [ ] Passo 5: entità sull'EventBus, proiettili e popup in pool
+  - [x] Passo 5: entità sull'EventBus (niente più `GameScene` nelle entità), proiettili e popup in pool
   - [ ] Passo 6: IA dei nemici e del boss su StateMachine
   - [ ] Passo 7: Telemetry locale, `CLAUDE.md` e ADR
 - [ ] **Fase 3, pipeline contenuti**: livello 1 in Tiled, poi spritesheet Aseprite
@@ -155,6 +158,9 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
   `Systems` della scena). Per i sistemi di gioco la scena usa il campo `systems`.
 - **Ordine dei sistemi in `GameScene.create()`**: gli handler dell'EventBus girano in ordine di iscrizione e i collider
   Arcade in ordine di creazione. Cambiare l'ordine di costruzione dei sistemi può cambiare il comportamento.
+- **Oggetti in pool**: un `Sukkino` o un `EnemyBullet` non si distrugge mai con `destroy()`: si chiama `retire()`
+  (torna nel pool) o `splat()`. Ogni `fire()` deve reimpostare **tutto** lo stato (texture, hitbox, gravità, velocità,
+  angolo, animazione), perché l'oggetto riusato si porta dietro i valori del lancio precedente.
 - **Gruppi fisici Arcade**: `physics.add.group().add(sprite)` resetta velocità e gravità del body. Per entità già
   configurate usare gruppi semplici (`this.add.group()`): i collider funzionano lo stesso.
 - **Hitbox e flipX**: l'offset del body Arcade non si specchia da solo. Usare `Enemy.setBodyBox()`, che lo ricalcola.

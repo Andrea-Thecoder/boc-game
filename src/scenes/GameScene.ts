@@ -2,21 +2,19 @@ import Phaser from 'phaser';
 import { BOSS_ARENA_X, DEBUG, GROUND_Y, H, LEVEL_WIDTH } from '../config';
 import { audio } from '../audio/engine';
 import { music } from '../audio/music';
-import { CONTENT, lineById } from '../content';
+import { CONTENT, line, lineById } from '../content';
 import { EventBus } from '../core/EventBus';
-import type { EnemyBullet } from '../entities/EnemyBullet';
 import { Player } from '../entities/Player';
-import type { Sukkino } from '../entities/Sukkino';
-import type { Enemy } from '../entities/enemies/Enemy';
 import { BossArenaSystem } from '../systems/BossArenaSystem';
 import { CameraSystem } from '../systems/CameraSystem';
 import { CombatSystem } from '../systems/CombatSystem';
-import { DialogueSystem, type BubbleTarget } from '../systems/DialogueSystem';
+import { DialogueSystem } from '../systems/DialogueSystem';
 import type { GameEvents } from '../systems/events';
 import { FxSystem } from '../systems/FxSystem';
 import type { ActorGroups, GameContext } from '../systems/GameContext';
 import { buildLevel } from '../systems/LevelBuilder';
 import { PickupSystem } from '../systems/PickupSystem';
+import { ProjectileSystem } from '../systems/ProjectileSystem';
 import { RunSystem } from '../systems/RunSystem';
 import { ScoreSystem } from '../systems/ScoreSystem';
 import { SpawnSystem } from '../systems/SpawnSystem';
@@ -32,6 +30,7 @@ interface Systems {
   camera: CameraSystem;
   spawn: SpawnSystem;
   pickups: PickupSystem;
+  projectiles: ProjectileSystem;
   combat: CombatSystem;
   bossArena: BossArenaSystem;
   run: RunSystem;
@@ -39,14 +38,13 @@ interface Systems {
 
 /**
  * Level scene. ONLY orchestration: builds the world, creates the systems, wires events and music.
- * Gameplay rules live in `src/systems/`.
+ * Gameplay rules live in `src/systems/`; entities talk to them through the EventBus, never through the scene.
  */
 export default class GameScene extends Phaser.Scene {
   player!: Player;
   private bus!: EventBus<GameEvents>;
   private controls!: Controls;
   private systems!: Systems;
-  private groups!: ActorGroups;
 
   constructor() {
     super('game');
@@ -63,13 +61,13 @@ export default class GameScene extends Phaser.Scene {
     this.bus = new EventBus<GameEvents>();
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.bus.clear());
 
-    const groups: ActorGroups = (this.groups = {
+    const groups: ActorGroups = {
       sukkini: this.add.group(),
       enemies: this.add.group(),
       enemyBullets: this.add.group(),
       pickups: this.add.group(),
-    });
-    this.player = new Player(this, 40, GROUND_Y - 1);
+    };
+    this.player = new Player(this, this.bus, 40, GROUND_Y - 1);
     this.controls = new Controls(this);
     const ctx: GameContext = { scene: this, bus: this.bus, player: this.player, groups, solids: level.solids };
 
@@ -85,6 +83,7 @@ export default class GameScene extends Phaser.Scene {
       score,
       spawn,
       pickups,
+      projectiles: new ProjectileSystem(ctx),
       camera: new CameraSystem(ctx, level.parallax),
       combat: new CombatSystem(ctx, fx, pickups),
       bossArena: new BossArenaSystem(ctx, { dialogue, pickups, spawn }, LEVEL.boss.nonnaDrop),
@@ -106,6 +105,7 @@ export default class GameScene extends Phaser.Scene {
     bus.on('wave:started', ({ line }) => {
       if (line) dialogue.say(player, lineById('paolone', line), 2200);
     });
+    bus.on('weapon:depleted', () => dialogue.say(player, line('paolone', 'munizioni_finite')));
     bus.on('boss:arenaLocked', () => music.play('boss'));
     bus.on('run:over', ({ outcome }) => {
       if (outcome === 'victory') music.play('victory');
@@ -125,58 +125,6 @@ export default class GameScene extends Phaser.Scene {
   }
 
   // -------------------------------------------------------------------------------------------
-  // LEGACY ENTITY API (passo 4 → passo 5)
-  // Entities still call these methods; each one only forwards to a system or emits an event.
-  // In passo 5 the entities will emit events themselves and this section will be deleted.
-  // -------------------------------------------------------------------------------------------
-
-  say(target: BubbleTarget, text: string, duration = 2000, shout = false) {
-    this.systems.dialogue.say(target, text, duration, shout);
-  }
-  splash(x: number, y: number, color: number, n = 9) {
-    this.systems.fx.splash(x, y, color, n);
-  }
-  dust(x: number, y: number) {
-    this.systems.fx.dust(x, y);
-  }
-  sparkle(x: number, y: number, n = 3) {
-    this.systems.fx.sparkle(x, y, n);
-  }
-  explosion(x: number, y: number) {
-    this.systems.fx.explosion(x, y);
-  }
-  addSukkino(s: Sukkino) {
-    this.groups.sukkini.add(s);
-  }
-  addEnemyBullet(b: EnemyBullet) {
-    this.groups.enemyBullets.add(b);
-  }
-  addEnemy(e: Enemy) {
-    this.systems.spawn.add(e);
-  }
-  aliveEnemies(): number {
-    return this.systems.spawn.aliveEnemies();
-  }
-  meleeHit(area: Phaser.Geom.Rectangle, dmg: number, facing: number) {
-    this.systems.combat.meleeHit(area, dmg, facing);
-  }
-  onEnemyKilled(enemy: Enemy, points: number) {
-    this.bus.emit('enemy:killed', { enemy, points });
-  }
-  onPlayerDeath() {
-    this.bus.emit('player:died');
-  }
-  onBossArrived() {
-    this.bus.emit('boss:arrived');
-  }
-  onBossDefeated() {
-    this.systems.bossArena.defeated();
-  }
-  syncHud() {
-    this.bus?.emit('hud:changed');
-  }
-
-  // -------------------------------------------------------------------------------------------
   // debug / test hooks: used only by src/debug/testHooks.ts (?e2e, ?debug)
   // -------------------------------------------------------------------------------------------
 
@@ -190,7 +138,7 @@ export default class GameScene extends Phaser.Scene {
   debugGodMode() {
     this.player.maxHp = 999;
     this.player.hp = 999;
-    this.syncHud();
+    this.bus.emit('hud:changed');
   }
 
   debugKillPlayer() {

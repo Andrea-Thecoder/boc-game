@@ -1,12 +1,17 @@
+import type Phaser from 'phaser';
 import { GROUND_Y, SPAWN_MARGIN, W } from '../config';
 import type { EnemyType, SpawnDef, WaveDef } from '../content';
 import type { Enemy } from '../entities/enemies/Enemy';
 import { Beghina, Chierichetto, Sacrestano } from '../entities/enemies/Faithful';
-import type GameScene from '../scenes/GameScene';
+import type { Player } from '../entities/Player';
+import type { GameBus } from './events';
 import type { GameContext } from './GameContext';
 import { WaveCursor, spawnX } from './rules/waves';
 
-const ENEMY_FACTORIES: Record<EnemyType, new (gs: GameScene, x: number, y: number) => Enemy> = {
+const ENEMY_FACTORIES: Record<
+  EnemyType,
+  new (scene: Phaser.Scene, bus: GameBus, target: Player, x: number, y: number) => Enemy
+> = {
   chierichetto: Chierichetto,
   beghina: Beghina,
   sacrestano: Sacrestano,
@@ -50,7 +55,12 @@ export class SpawnSystem {
   private spawn(s: SpawnDef) {
     if (this.runOver) return;
     const x = spawnX(s.at, this.ctx.scene.cameras.main.scrollX, W, SPAWN_MARGIN);
-    const y = (s.y ?? GROUND_Y) - 1;
-    this.add(new ENEMY_FACTORIES[s.type](this.ctx.scene, x, y));
+    this.spawnAt(s.type, x, (s.y ?? GROUND_Y) - 1);
+  }
+
+  /** Creates an enemy with its feet at (x, y). */
+  spawnAt(type: EnemyType, x: number, y: number) {
+    const { scene, bus, player } = this.ctx;
+    this.add(new ENEMY_FACTORIES[type](scene, bus, player, x, y));
   }
 }

@@ -20,7 +20,13 @@ export class ScoreSystem {
       this.score += CONTENT.player.pickupScore;
       bus.emit('hud:changed');
     });
-    bus.on('hud:changed', () => this.publish());
+    // anything Paolone-related shown in the HUD
+    const publish = () => this.publish();
+    bus.on('hud:changed', publish);
+    bus.on('player:hurt', publish);
+    bus.on('player:healed', publish);
+    bus.on('player:threw', publish);
+    bus.on('weapon:changed', publish);
   }
 
   get total(): number {

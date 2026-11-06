@@ -97,20 +97,3 @@ export class Bubble extends Phaser.GameObjects.Container {
     super.destroy(fromScene);
   }
 }
-
-/** Floating "+100" style text. */
-export function popText(scene: Phaser.Scene, x: number, y: number, text: string, color = 0xe8b830) {
-  const t = scene.add
-    .bitmapText(Math.round(x), Math.round(y), 'pxo', clean(text), 7)
-    .setOrigin(0.5)
-    .setTint(color)
-    .setDepth(900);
-  scene.tweens.add({
-    targets: t,
-    y: y - 18,
-    alpha: 0,
-    duration: 800,
-    ease: 'Cubic.Out',
-    onComplete: () => t.destroy(),
-  });
-}

@@ -2,8 +2,9 @@ import Phaser from 'phaser';
 import { sfx } from '../../audio/sfx';
 import { roll } from '../../core/random';
 import { CONTENT, line } from '../../content';
-import { EnemyBullet } from '../EnemyBullet';
-import type GameScene from '../../scenes/GameScene';
+import { bulletGravity } from '../EnemyBullet';
+import type { GameBus } from '../../systems/events';
+import { lob } from '../../systems/rules/ballistics';
 import type { Player } from '../Player';
 import { Enemy } from './Enemy';
 
@@ -18,10 +19,10 @@ export class Chierichetto extends Enemy {
   private nextThrow = 0;
   private throwingUntil = 0;
 
-  constructor(gs: GameScene, x: number, y: number) {
-    super(gs, x, y, 'chierichetto', CHIERICHETTO.hp);
+  constructor(scene: Phaser.Scene, bus: GameBus, target: Player, x: number, y: number) {
+    super(scene, bus, target, x, y, 'chierichetto', CHIERICHETTO.hp);
     this.setBodyBox(10, 20, 5, 4);
-    this.nextThrow = gs.time.now + roll(CHIERICHETTO.attack.firstDelayMs);
+    this.nextThrow = scene.time.now + roll(CHIERICHETTO.attack.firstDelayMs);
     this.play('chierichetto-walk');
   }
 
@@ -51,8 +52,8 @@ export class Chierichetto extends Enemy {
       this.stop().setFrame(2);
       const sx = this.x + this.facing * 6,
         sy = this.y - 21;
-      const [vxB, vyB] = EnemyBullet.lob(sx, sy, p.x, p.y - 14, attack.flightTime, EnemyBullet.gravityOf('ostia'));
-      this.gs.addEnemyBullet(new EnemyBullet(this.gs, 'ostia', sx, sy, vxB, vyB));
+      const [vx, vy] = lob(sx, sy, p.x, p.y - 14, attack.flightTime, bulletGravity('ostia'));
+      this.bus.emit('enemy:fired', { kind: 'ostia', x: sx, y: sy, vx, vy });
       sfx.ostia();
     }
   }
@@ -66,8 +67,8 @@ export class Beghina extends Enemy {
   private stateUntil = 0;
   private hitDone = false;
 
-  constructor(gs: GameScene, x: number, y: number) {
-    super(gs, x, y, 'beghina', BEGHINA.hp);
+  constructor(scene: Phaser.Scene, bus: GameBus, target: Player, x: number, y: number) {
+    super(scene, bus, target, x, y, 'beghina', BEGHINA.hp);
     this.setBodyBox(10, 20, 11, 4);
     this.play('beghina-walk');
   }
@@ -120,10 +121,10 @@ export class Sacrestano extends Enemy {
   protected readonly score = SACRESTANO.score;
   private nextPuff = 0;
 
-  constructor(gs: GameScene, x: number, y: number) {
-    super(gs, x, y, 'sacrestano', SACRESTANO.hp);
+  constructor(scene: Phaser.Scene, bus: GameBus, target: Player, x: number, y: number) {
+    super(scene, bus, target, x, y, 'sacrestano', SACRESTANO.hp);
     this.setBodyBox(10, 24, 7, 4);
-    this.nextPuff = gs.time.now + SACRESTANO.attack.firstDelayMs;
+    this.nextPuff = scene.time.now + SACRESTANO.attack.firstDelayMs;
     this.play('sacrestano-swing');
   }
 
@@ -142,9 +143,8 @@ export class Sacrestano extends Enemy {
       const sx = this.x + this.facing * 12,
         sy = this.y - 14;
       const ang = Math.atan2(p.y - 16 - sy, p.x - sx);
-      this.gs.addEnemyBullet(
-        new EnemyBullet(this.gs, 'fumo', sx, sy, Math.cos(ang) * attack.smokeSpeed, Math.sin(ang) * attack.smokeSpeed),
-      );
+      const v = attack.smokeSpeed;
+      this.bus.emit('enemy:fired', { kind: 'fumo', x: sx, y: sy, vx: Math.cos(ang) * v, vy: Math.sin(ang) * v });
       sfx.smoke();
     }
   }

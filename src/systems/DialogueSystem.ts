@@ -3,9 +3,8 @@ import { Enemy } from '../entities/enemies/Enemy';
 import { MonsignorPanza } from '../entities/enemies/MonsignorPanza';
 import { Bubble } from '../ui/Bubble';
 import { kappa } from '../ui/text';
+import type { BubbleTarget } from './events';
 import type { GameContext } from './GameContext';
-
-export type BubbleTarget = { x: number; y: number; active?: boolean };
 
 /** Max bubbles on screen before minor enemy lines are dropped (shouts always show). */
 const MAX_BUBBLES = 3;
@@ -14,7 +13,9 @@ const MAX_BUBBLES = 3;
 export class DialogueSystem {
   private readonly bubbles = new Map<object, Bubble>();
 
-  constructor(private readonly ctx: GameContext) {}
+  constructor(private readonly ctx: GameContext) {
+    ctx.bus.on('dialogue:say', ({ target, text, durationMs, shout }) => this.say(target, text, durationMs, shout));
+  }
 
   say(target: BubbleTarget, text: string, duration = 2000, shout = false) {
     const isPlayer = target === this.ctx.player;

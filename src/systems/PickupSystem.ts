@@ -41,6 +41,6 @@ export class PickupSystem {
   }
 
   private place(kind: PickupKind, x: number, y: number, floating: boolean) {
-    this.ctx.groups.pickups.add(new Pickup(this.ctx.scene, kind, x, y, floating));
+    this.ctx.groups.pickups.add(new Pickup(this.ctx.scene, this.ctx.bus, kind, x, y, floating));
   }
 }

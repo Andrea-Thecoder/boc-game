@@ -6,6 +6,7 @@ import type { DialogueSystem } from './DialogueSystem';
 import type { GameContext } from './GameContext';
 import type { PickupSystem } from './PickupSystem';
 import type { SpawnSystem } from './SpawnSystem';
+import { CONTENT } from '../content';
 import { shouldLockArena } from './rules/bossArena';
 
 /** Intro dialogue timings (ms after the boss stops). */
@@ -25,11 +26,21 @@ export class BossArenaSystem {
     private readonly deps: { dialogue: DialogueSystem; pickups: PickupSystem; spawn: SpawnSystem },
     private readonly nonnaDrop: LevelDef['boss']['nonnaDrop'],
   ) {
-    ctx.bus.on('boss:arrived', () => this.intro());
-    ctx.bus.on('hud:changed', () => {
-      const b = this.boss;
-      ctx.scene.registry.set('bossHp', b ? Math.max(0, b.hp / b.maxHp) : -1);
+    const bus = ctx.bus;
+    bus.on('boss:arrived', () => this.intro());
+    bus.on('boss:summonRequested', () => this.summonAltarBoy());
+    bus.on('boss:damaged', () => this.publishHp());
+    // registered before RunSystem's listener: the HUD bar disappears before the victory sequence
+    bus.on('boss:defeated', () => {
+      this.boss = null;
+      this.publishHp();
     });
+    bus.on('hud:changed', () => this.publishHp());
+  }
+
+  private publishHp() {
+    const b = this.boss;
+    this.ctx.scene.registry.set('bossHp', b ? Math.max(0, b.hp / b.maxHp) : -1);
   }
 
   update(time: number) {
@@ -40,20 +51,13 @@ export class BossArenaSystem {
     if (this.boss?.fighting && time > this.nextNonnaDrop) this.dropSnack(time);
   }
 
-  /** Called when the boss has been launched into orbit. */
-  defeated() {
-    this.boss = null;
-    this.ctx.bus.emit('hud:changed');
-    this.ctx.bus.emit('boss:defeated');
-  }
-
   private lock() {
     const { scene, player, bus } = this.ctx;
     this.locked = true;
     player.frozen = true;
     bus.emit('boss:arenaLocked');
     scene.cameras.main.flash(250, 120, 20, 40);
-    this.boss = new MonsignorPanza(scene);
+    this.boss = new MonsignorPanza(scene, bus, player);
     this.deps.spawn.add(this.boss);
     bus.emit('hud:changed');
   }
@@ -74,6 +78,16 @@ export class BossArenaSystem {
       this.nextNonnaDrop = scene.time.now + this.nonnaDrop.firstAfterMs;
       bus.emit('boss:fightStarted');
     });
+  }
+
+  /** Monsignor Panza calls his altar boys, if there is room for one more. */
+  private summonAltarBoy() {
+    const boss = this.boss;
+    const { spawn, dialogue } = this.deps;
+    if (!boss || spawn.aliveEnemies() >= CONTENT.boss.summon.maxAlive) return;
+    boss.laugh(700);
+    dialogue.say(boss, line('monsignor-panza', 'evoca'), 900);
+    spawn.spawnAt('chierichetto', BOSS_ARENA_X + 335, GROUND_Y - 2);
   }
 
   /** A nonna on a balcony throws Paolone a snack. Grandmothers always help. */

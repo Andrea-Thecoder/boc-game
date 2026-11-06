@@ -44,8 +44,9 @@ export class CombatSystem {
     ph.add.overlap(groups.sukkini, groups.enemyBullets, (s, b) => {
       const bullet = b as EnemyBullet;
       if (!deflectable(bullet)) return;
+      if (!bullet.active) return;
       this.fx.dust(bullet.x, bullet.y + 4);
-      bullet.destroy();
+      bullet.retire();
       (s as Sukkino).splat();
     });
 
@@ -64,10 +65,12 @@ export class CombatSystem {
       if (e instanceof MonsignorPanza && e.fighting) player.hurt(e.x);
     });
     ph.add.overlap(player, groups.pickups, (_p, k) => pickups.collect(k as Pickup));
+
+    ctx.bus.on('player:panzata', ({ area, damage, facing }) => this.panzata(area, damage, facing));
   }
 
   /** The panzata: damages enemies in the area and swats away wafers and incense. */
-  meleeHit(area: Phaser.Geom.Rectangle, dmg: number, facing: number) {
+  private panzata(area: Phaser.Geom.Rectangle, dmg: number, facing: number) {
     const { groups, player } = this.ctx;
     let hit = false;
     for (const child of groups.enemies.getChildren()) {
@@ -78,9 +81,9 @@ export class CombatSystem {
     }
     for (const child of [...groups.enemyBullets.getChildren()]) {
       const b = child as EnemyBullet;
-      if (deflectable(b) && Phaser.Geom.Rectangle.Overlaps(area, b.getBounds())) {
+      if (b.active && deflectable(b) && Phaser.Geom.Rectangle.Overlaps(area, b.getBounds())) {
         this.fx.dust(b.x, b.y);
-        b.destroy();
+        b.retire();
       }
     }
     if (hit) {
@@ -107,7 +110,7 @@ export class CombatSystem {
     } else {
       this.fx.dust(bullet.x, bullet.y);
     }
-    bullet.destroy();
+    bullet.retire();
   }
 
   private bulletHitsPlayer(bullet: EnemyBullet) {
@@ -116,6 +119,6 @@ export class CombatSystem {
     player.hurt(bullet.x);
     if (bullet.kind === 'goccia') this.fx.splash(bullet.x, bullet.y, HOLY_WATER, 4);
     else this.fx.dust(bullet.x, bullet.y);
-    bullet.destroy();
+    bullet.retire();
   }
 }

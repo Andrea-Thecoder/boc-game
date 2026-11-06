@@ -1,15 +1,15 @@
 import Phaser from 'phaser';
-import type GameScene from '../scenes/GameScene';
-
 import type { PickupKind } from '../content';
+import type { GameBus } from '../systems/events';
 
 export type { PickupKind };
 
-/** Collectibles: new sukkini flavours or a panzerotto that restores a heart. */
+/** Collectibles: new sukkini flavours or a panzerotto that restores hearts. */
 export class Pickup extends Phaser.Physics.Arcade.Sprite {
   readonly kind: PickupKind;
+  private readonly sparkles: Phaser.Time.TimerEvent;
 
-  constructor(scene: GameScene, kind: PickupKind, x: number, y: number, floating = true) {
+  constructor(scene: Phaser.Scene, bus: GameBus, kind: PickupKind, x: number, y: number, floating = true) {
     super(scene, x, y, kind === 'panzerotto' ? 'panzerotto' : `pickup-${kind}`);
     this.kind = kind;
     scene.add.existing(this);
@@ -25,11 +25,9 @@ export class Pickup extends Phaser.Physics.Arcade.Sprite {
     this.sparkles = scene.time.addEvent({
       delay: 900,
       loop: true,
-      callback: () => scene.sparkle(this.x, this.y - this.height / 2),
+      callback: () => bus.emit('fx:sparkle', { x: this.x, y: this.y - this.height / 2 }),
     });
   }
-
-  private sparkles: Phaser.Time.TimerEvent;
 
   destroy(fromScene?: boolean) {
     this.sparkles?.remove();
