@@ -111,8 +111,12 @@ docs/         gdd/, adr/ (decisioni architetturali), roadmap
 
 Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over. **Non segue ancora l'architettura target**:
 
-- `scenes/GameScene.ts` è una god class: camera, ondate, collisioni, effetti, boss, HUD sync. → da spezzare nei sistemi
-- Le entità ricevono `GameScene` e ne chiamano i metodi. → da sostituire con l'EventBus
+- `scenes/GameScene.ts` fa solo orchestrazione: costruisce il livello, crea i sistemi di `src/systems/`, collega eventi
+  e musica. La logica sta nei sistemi (Camera, Fx, Dialogue, Spawn, Pickup, Combat, Score, BossArena, Run), le regole
+  pure e testate in `systems/rules/`, gli eventi in `systems/events.ts` (`GameEvents`).
+- Le entità ricevono ancora `GameScene` e ne chiamano i metodi: in `GameScene` c'è una sezione **LEGACY ENTITY API**
+  che inoltra ogni chiamata a un sistema o emette un evento. → passo 5: le entità emettono eventi, la sezione sparisce.
+  **Non aggiungere nuovi metodi a quella sezione.**
 - L'IA usa campi `phase`/`stateUntil` ad hoc. → da migrare su StateMachine
 - Contenuti già in JSON validati (armi, Paolone, nemici, boss, oggetti, livello 1, dialoghi). Il livello si scrive
   ancora a mano in JSON: passerà a Tiled nella fase 3.
@@ -129,7 +133,7 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
   - [x] Passo 1: Vitest in CI, test di `kappa()` / `clean()` / `pick()`
   - [x] Passo 2: `core/EventBus`, `core/StateMachine`, `core/Pool` con unit test (pronti, **non ancora usati dal gioco**)
   - [x] Passo 3: contenuti in JSON validati con zod (armi, Paolone, nemici, proiettili, boss, oggetti, livello 1, dialoghi)
-  - [ ] Passo 4: `GameScene` spezzata nei sistemi
+  - [x] Passo 4: `GameScene` spezzata nei sistemi, `GameEvents` tipizzati, regole pure in `systems/rules/`
   - [ ] Passo 5: entità sull'EventBus, proiettili e popup in pool
   - [ ] Passo 6: IA dei nemici e del boss su StateMachine
   - [ ] Passo 7: Telemetry locale, `CLAUDE.md` e ADR
@@ -146,6 +150,11 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
   Font `px` (cella 6x8) → size 6, 12…; font `pxo` (cella 7x9) → size 7, 14, 21. Altri valori li scalano in modo sbagliato.
 - **`useDefineForClassFields`**: un campo di una sottoclasse con lo stesso nome di una proprietà Phaser la sovrascrive
   (es. `state` su un GameObject). Usare nomi univoci (`phase`, `mode`).
+- **Nomi riservati di Phaser.Scene**: un campo di una scena non deve chiamarsi `sys`, `game`, `events`, `registry`,
+  `cameras`, `physics`, `time`, `add`, `scene`... sovrascriverebbe il gestore interno di Phaser (es. `sys` è il
+  `Systems` della scena). Per i sistemi di gioco la scena usa il campo `systems`.
+- **Ordine dei sistemi in `GameScene.create()`**: gli handler dell'EventBus girano in ordine di iscrizione e i collider
+  Arcade in ordine di creazione. Cambiare l'ordine di costruzione dei sistemi può cambiare il comportamento.
 - **Gruppi fisici Arcade**: `physics.add.group().add(sprite)` resetta velocità e gravità del body. Per entità già
   configurate usare gruppi semplici (`this.add.group()`): i collider funzionano lo stesso.
 - **Hitbox e flipX**: l'offset del body Arcade non si specchia da solo. Usare `Enemy.setBodyBox()`, che lo ricalcola.
