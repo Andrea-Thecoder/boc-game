@@ -13,10 +13,6 @@ export function kappa(text: string): string {
     .replace(/C(?![EIÈÉÌ])(?!C[EIÈÉÌ])/g, 'K');
 }
 
-export function pick<T>(list: readonly T[]): T {
-  return list[Math.floor(Math.random() * list.length)];
-}
-
 /** Every character the pixel font can draw (see `art/font.ts`), plus newline. */
 const UNSUPPORTED = /[^A-Z0-9 !'",\-.:?+/()<>~\n]/g;
 

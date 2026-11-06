@@ -2,9 +2,11 @@ import Phaser from 'phaser';
 import { GRAVITY } from '../config';
 import type GameScene from '../scenes/GameScene';
 
-export type BulletKind = 'ostia' | 'goccia' | 'fumo' | 'campana';
+import { CONTENT, type BulletKind } from '../content';
 
-const GRAV: Record<BulletKind, number> = { ostia: 300, goccia: 360, fumo: 0, campana: 520 };
+export type { BulletKind };
+
+const gravityOf = (kind: BulletKind) => CONTENT.projectiles[kind].gravity;
 
 /** Hostile projectile: consecrated wafers, holy water, toxic incense, falling bells. */
 export class EnemyBullet extends Phaser.Physics.Arcade.Sprite {
@@ -19,7 +21,7 @@ export class EnemyBullet extends Phaser.Physics.Arcade.Sprite {
     scene.add.existing(this);
     scene.physics.add.existing(this);
     const body = this.body as Phaser.Physics.Arcade.Body;
-    body.setGravityY(GRAV[kind] - GRAVITY);
+    body.setGravityY(gravityOf(kind) - GRAVITY);
     this.setVelocity(vx, vy).setDepth(55);
     this.solid = kind !== 'fumo';
     if (kind === 'ostia') this.setAngularVelocity(vx > 0 ? 600 : -600);
@@ -39,7 +41,7 @@ export class EnemyBullet extends Phaser.Physics.Arcade.Sprite {
   }
 
   static gravityOf(kind: BulletKind) {
-    return GRAV[kind];
+    return gravityOf(kind);
   }
 
   preUpdate(t: number, d: number) {

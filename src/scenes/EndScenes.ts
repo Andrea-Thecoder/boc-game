@@ -3,7 +3,8 @@ import { GROUND_Y, H, W } from '../config';
 import { TORSO } from '../art/sprites';
 import { music } from '../audio/music';
 import { sfx } from '../audio/sfx';
-import { clean, kappa, pick } from '../ui/text';
+import { clean, kappa } from '../ui/text';
+import { line } from '../content';
 
 interface Result {
   score: number;
@@ -70,18 +71,7 @@ export class GameOverScene extends EndScene {
       .setOrigin(0.5, 1)
       .setScale(2)
       .setAngle(-90);
-    this.text(
-      70,
-      kappa(
-        pick([
-          'Mannaggia... mi serve un altro succhino.',
-          'Il Monsignore ha vinto... per ora.',
-          'Chiappetons, perdonami!',
-        ]),
-      ),
-      7,
-      0xe8b830,
-    );
+    this.text(70, kappa(line('paolone', 'game_over')), 7, 0xe8b830);
     this.text(92, `PUNTI ${data.score}`);
     this.waitFor('game');
   }
@@ -96,7 +86,7 @@ export class VictoryScene extends EndScene {
     this.backdrop(false);
     this.text(6, 'CHIAPPETONS', 14, 0xe8b830);
     this.text(22, "E' SALVA!", 14, 0xe8b830);
-    this.text(42, "MONSIGNOR PANZA E' VOLATO VIA... MA TORNERA'.", 7, 0xe2685a);
+    this.text(42, line('narratore', 'vittoria_sottotitolo'), 7, 0xe2685a);
     this.add
       .sprite(W / 2, GROUND_Y + 1, 'paolone-legs', 0)
       .setOrigin(0.5, 1)
@@ -110,7 +100,7 @@ export class VictoryScene extends EndScene {
       loop: true,
       callback: () => torso.setFrame(torso.frame.name === String(TORSO.up) ? TORSO.idle : TORSO.up),
     });
-    this.text(62, kappa('Il Vaticano può dormire tranquillo. Io invece vado a mangiare.'));
+    this.text(62, kappa(line('paolone', 'vittoria')));
     const m = Math.floor(data.seconds / 60),
       s = data.seconds % 60;
     this.text(82, `PUNTI ${data.score}   TEMPO ${m}:${String(s).padStart(2, '0')}`);

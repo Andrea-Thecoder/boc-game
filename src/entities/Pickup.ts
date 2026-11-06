@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import type GameScene from '../scenes/GameScene';
 
-export type PickupKind = 'pera' | 'ace' | 'pesca' | 'panzerotto';
+import type { PickupKind } from '../content';
+
+export type { PickupKind };
 
 /** Collectibles: new sukkini flavours or a panzerotto that restores a heart. */
 export class Pickup extends Phaser.Physics.Arcade.Sprite {

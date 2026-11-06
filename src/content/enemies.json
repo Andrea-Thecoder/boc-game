@@ -1,0 +1,40 @@
+{
+  "chierichetto": {
+    "hp": 2,
+    "score": 100,
+    "walkSpeed": 58,
+    "retreatSpeed": 48,
+    "keepDistance": [60, 110],
+    "attack": {
+      "firstDelayMs": [900, 1800],
+      "cooldownMs": [1600, 2500],
+      "windupMs": 300,
+      "range": 220,
+      "flightTime": 0.85
+    }
+  },
+  "beghina": {
+    "hp": 3,
+    "score": 150,
+    "walkSpeed": 40,
+    "stopDistance": 26,
+    "attack": {
+      "reach": 34,
+      "verticalReach": 26,
+      "windupMs": 380,
+      "whipMs": 260
+    }
+  },
+  "sacrestano": {
+    "hp": 4,
+    "score": 200,
+    "walkSpeed": 22,
+    "keepDistance": 120,
+    "attack": {
+      "firstDelayMs": 1200,
+      "cooldownMs": [2600, 3400],
+      "range": 240,
+      "smokeSpeed": 42
+    }
+  }
+}

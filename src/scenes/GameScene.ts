@@ -4,17 +4,19 @@ import { audio } from '../audio/engine';
 import { music } from '../audio/music';
 import { sfx } from '../audio/sfx';
 import { type EnemyBullet } from '../entities/EnemyBullet';
-import { Pickup, type PickupKind } from '../entities/Pickup';
+import { Pickup } from '../entities/Pickup';
 import { Player } from '../entities/Player';
 import type { Sukkino } from '../entities/Sukkino';
 import { Enemy } from '../entities/enemies/Enemy';
 import { Beghina, Chierichetto, Sacrestano } from '../entities/enemies/Faithful';
 import { MonsignorPanza } from '../entities/enemies/MonsignorPanza';
-import { LEVEL1, type EnemyType, type SpawnDef } from '../level/level1';
 import { Bubble, popText } from '../ui/Bubble';
 import { Controls } from '../ui/Controls';
-import { clean, kappa, pick } from '../ui/text';
-import { WEAPONS } from '../weapons';
+import { clean, kappa } from '../ui/text';
+import { pick } from '../core/random';
+import { CONTENT, line, lineById, type EnemyType, type PickupKind, type SpawnDef } from '../content';
+
+const LEVEL = CONTENT.levels.level1;
 
 type Emitter = Phaser.GameObjects.Particles.ParticleEmitter;
 
@@ -92,7 +94,7 @@ export default class GameScene extends Phaser.Scene {
     this.pickups = this.add.group();
     this.player = new Player(this, 40, GROUND_Y - 1);
     this.controls = new Controls(this);
-    for (const p of LEVEL1.pickups) this.pickups.add(new Pickup(this, p.kind, p.x, p.y));
+    for (const p of LEVEL.pickups) this.pickups.add(new Pickup(this, p.kind, p.x, p.y));
 
     this.buildEffects();
     this.setupCollisions();
@@ -111,16 +113,14 @@ export default class GameScene extends Phaser.Scene {
 
     // mission card + opening line
     const card = this.add
-      .bitmapText(W / 2, 58, 'pxo', clean(`MISSIONE 1\n${LEVEL1.name}`), 7)
+      .bitmapText(W / 2, 58, 'pxo', clean(`MISSIONE 1\n${LEVEL.name}`), 7)
       .setOrigin(0.5)
       .setCenterAlign()
       .setScrollFactor(0)
       .setDepth(2000)
       .setTint(0xe8b830);
     this.tweens.add({ targets: card, alpha: 0, delay: 2200, duration: 600, onComplete: () => card.destroy() });
-    this.time.delayedCall(700, () =>
-      this.say(this.player, 'Monsignor Panza vuole conquistare il Vaticano? Prima deve passare da Paolone!', 2600),
-    );
+    this.time.delayedCall(700, () => this.say(this.player, line('paolone', 'intro_livello'), 2600));
 
     if (DEBUG) this.physics.world.createDebugGraphic();
   }
@@ -130,16 +130,14 @@ export default class GameScene extends Phaser.Scene {
   // -------------------------------------------------------------------------------------------
 
   private buildProps() {
-    for (const p of LEVEL1.props) {
-      const y = p.y ?? GROUND_Y + 1;
-      this.add
-        .image(p.x, y, p.key)
-        .setOrigin(0.5, 1)
-        .setDepth(p.depth ?? 20);
-      if (p.platform) this.addPlatform(p.x + p.platform.dx, p.platform.top, p.platform.w);
-      if (p.key === 'cartello') {
+    for (const p of LEVEL.props) {
+      const kind = CONTENT.props[p.kind];
+      const y = p.y ?? GROUND_Y + kind.groundOffset;
+      this.add.image(p.x, y, p.kind).setOrigin(0.5, 1).setDepth(kind.depth);
+      if (kind.platform) this.addPlatform(p.x + kind.platform.dx, y + kind.platform.dy, kind.platform.w);
+      if (p.label !== undefined) {
         this.add
-          .bitmapText(p.x, y - 22, 'px', 'CHIAPPETONS', 6)
+          .bitmapText(p.x, y + (kind.labelDy ?? 0), 'px', clean(p.label), 6)
           .setOrigin(0.5)
           .setTint(0x120b16)
           .setDepth(26);
@@ -283,11 +281,11 @@ export default class GameScene extends Phaser.Scene {
     this.houses.tilePositionX = cam.scrollX * 0.45;
 
     // waves
-    const wave = LEVEL1.waves[this.waveIdx];
+    const wave = LEVEL.waves[this.waveIdx];
     if (wave && this.player.x >= wave.trigger) {
       this.waveIdx++;
       wave.spawns.forEach((s) => this.time.delayedCall(s.delay ?? 0, () => this.spawn(s)));
-      if (wave.line) this.say(this.player, wave.line, 2200);
+      if (wave.line) this.say(this.player, lineById('paolone', wave.line), 2200);
     }
 
     // boss
@@ -341,23 +339,24 @@ export default class GameScene extends Phaser.Scene {
   onBossArrived() {
     const boss = this.boss!;
     boss.setFrame(1);
-    this.say(boss, 'Pentiti, ciccione! Prima Chiappetons, poi il Vaticano sarà MIO!', 2300, true);
-    this.time.delayedCall(3300, () => this.say(this.player, 'Prima devi passare dal mio succhino al tamarindo!', 2000));
+    this.say(boss, line('monsignor-panza', 'intro'), 2300, true);
+    this.time.delayedCall(3300, () => this.say(this.player, line('paolone', 'risposta_boss'), 2000));
     this.time.delayedCall(5900, () => {
       this.player.frozen = false;
       boss.startFight();
-      this.nextNonnaDrop = this.time.now + 12000;
+      this.nextNonnaDrop = this.time.now + LEVEL.boss.nonnaDrop.firstAfterMs;
     });
   }
 
   /** A nonna on a balcony throws Paolone a snack. Grandmothers always help. */
   private nonnaDrop(time: number) {
-    this.nextNonnaDrop = time + 14000;
-    const kind = pick<PickupKind>(['ace', 'pera', 'pesca', 'panzerotto', 'panzerotto']);
+    const drop = LEVEL.boss.nonnaDrop;
+    this.nextNonnaDrop = time + drop.everyMs;
+    const kind: PickupKind = pick(drop.kinds);
     const x = BOSS_ARENA_X + 30 + Math.random() * 120;
     const k = new Pickup(this, kind, x, -10, false);
     this.pickups.add(k);
-    this.say({ x, y: 36 }, pick(['Tiè, Paolì! Mangia!', 'Sei sciupato, mangia!', 'Forza Paolone!']), 1300);
+    this.say({ x, y: 36 }, line('nonna', 'lancio'), 1300);
   }
 
   onBossDefeated() {
@@ -366,9 +365,7 @@ export default class GameScene extends Phaser.Scene {
     this.syncHud();
     music.play('victory');
     this.player.frozen = true;
-    this.time.delayedCall(600, () =>
-      this.say(this.player, 'Il Vaticano può dormire tranquillo. Ora però mi serve un succhino per me.', 3000),
-    );
+    this.time.delayedCall(600, () => this.say(this.player, line('paolone', 'boss_sconfitto'), 3000));
     this.time.delayedCall(5200, () => this.endScene('victory'));
   }
 
@@ -422,15 +419,16 @@ export default class GameScene extends Phaser.Scene {
     this.sparkle(k.x, k.y - 6, 10);
     sfx.pickup();
     if (k.kind === 'panzerotto') {
-      this.player.heal(2);
-      this.say(this.player, pick(['Panzerotto! Mamma mia che bontà!', 'Questo lo mangio subito!']), 1500);
-      popText(this, k.x, k.y - 16, '+2 VITA', 0xb3242f);
+      const heal = CONTENT.player.panzerottoHeal;
+      this.player.heal(heal);
+      this.say(this.player, line('paolone', 'raccolta_panzerotto'), 1500);
+      popText(this, k.x, k.y - 16, `+${heal} VITA`, 0xb3242f);
     } else {
       this.player.setWeapon(k.kind);
-      this.say(this.player, WEAPONS[k.kind].shout, 1800);
+      this.say(this.player, lineById('paolone', `raccolta_${k.kind}`), 1800);
       sfx.burp();
     }
-    this.score += 50;
+    this.score += CONTENT.player.pickupScore;
     this.syncHud();
     k.destroy();
   }
@@ -441,7 +439,7 @@ export default class GameScene extends Phaser.Scene {
 
   /** Skips every wave and puts Paolone just before the boss arena. */
   debugSkipToBossArena() {
-    this.waveIdx = LEVEL1.waves.length;
+    this.waveIdx = LEVEL.waves.length;
     this.cameras.main.scrollX = BOSS_ARENA_X - 120;
     this.player.setPosition(BOSS_ARENA_X - 40, GROUND_Y - 1);
   }
@@ -461,7 +459,7 @@ export default class GameScene extends Phaser.Scene {
     if (this.finished) return;
     this.finished = true;
     music.stop();
-    this.say(this.player, pick(['Mannaggia...', 'Mi sento... calante...', 'Ditelo a mamma...']), 1500);
+    this.say(this.player, line('paolone', 'morte'), 1500);
     this.time.delayedCall(2200, () => this.endScene('gameover'));
   }
 

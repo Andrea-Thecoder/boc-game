@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { GRAVITY } from '../config';
 import { FLAVOURS } from '../art/sprites';
-import type { WeaponDef } from '../weapons';
+import type { Flavour, Weapon } from '../content';
 import type GameScene from '../scenes/GameScene';
 
 /** A thrown juice brick. Splashes on impact; peach ones bounce first. */
@@ -10,7 +10,7 @@ export class Sukkino extends Phaser.Physics.Arcade.Sprite {
   bouncesLeft = 0;
   private born = 0;
 
-  constructor(scene: GameScene, x: number, y: number, w: WeaponDef, angle: number) {
+  constructor(scene: GameScene, x: number, y: number, w: Weapon, angle: number) {
     super(scene, x, y, `sukkino-${w.flavour}`);
     scene.add.existing(this);
     scene.physics.add.existing(this);
@@ -28,7 +28,7 @@ export class Sukkino extends Phaser.Physics.Arcade.Sprite {
   }
 
   get flavourColor(): number {
-    const key = this.texture.key.replace('sukkino-', '') as keyof typeof FLAVOURS;
+    const key = this.texture.key.replace('sukkino-', '') as Flavour;
     return Phaser.Display.Color.HexStringToColor(FLAVOURS[key]).color;
   }
 

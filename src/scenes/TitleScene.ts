@@ -6,6 +6,7 @@ import { music } from '../audio/music';
 import { sfx } from '../audio/sfx';
 import { Bubble } from '../ui/Bubble';
 import { kappa } from '../ui/text';
+import { line } from '../content';
 
 export default class TitleScene extends Phaser.Scene {
   private prompt!: Phaser.GameObjects.BitmapText;
@@ -79,7 +80,7 @@ export default class TitleScene extends Phaser.Scene {
 
     this.time.delayedCall(
       1200,
-      () => new Bubble(this, { x: px + 8, y: GROUND_Y - 4 }, kappa('Chiappetons non si tocca!'), 70, 2400),
+      () => new Bubble(this, { x: px + 8, y: GROUND_Y - 4 }, kappa(line('paolone', 'titolo')), 70, 2400),
     );
 
     this.input.keyboard!.on('keydown', (e: KeyboardEvent) => this.onKey(e.code));

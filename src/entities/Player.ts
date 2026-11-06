@@ -2,11 +2,12 @@ import Phaser from 'phaser';
 import { TORSO } from '../art/sprites';
 import { GROUND_Y } from '../config';
 import { sfx } from '../audio/sfx';
-import { WEAPONS, type WeaponDef } from '../weapons';
-import type { Flavour } from '../art/sprites';
+import { CONTENT, line, type Flavour, type Weapon } from '../content';
 import type GameScene from '../scenes/GameScene';
 import type { Controls } from '../ui/Controls';
 import { Sukkino } from './Sukkino';
+
+const STATS = CONTENT.player;
 
 type Aim = 'fwd' | 'up' | 'diagUp' | 'down' | 'diagDown';
 
@@ -21,9 +22,9 @@ const AIMS: Record<Aim, { frame: number; ox: number; oy: number; dx: number; dy:
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   readonly torso: Phaser.GameObjects.Sprite;
-  maxHp = 5;
-  hp = 5;
-  weapon: WeaponDef = WEAPONS.tamarindo;
+  maxHp = STATS.maxHp;
+  hp = STATS.maxHp;
+  weapon: Weapon = CONTENT.weapons.tamarindo;
   ammo = Infinity;
   facing = 1;
   dead = false;
@@ -80,12 +81,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // movement
     if (h !== 0) this.facing = h;
     const lunging = time < this.poseUntil && this.poseFrame === TORSO.panza;
-    if (!lunging) body.setVelocityX(h * 105);
+    if (!lunging) body.setVelocityX(h * STATS.runSpeed);
     if (!this.frozen && c.jumpPressed && ground) {
       if (c.down && this.y < GROUND_Y - 2) {
         this.dropUntil = time + 250;
       } else {
-        body.setVelocityY(-330);
+        body.setVelocityY(-STATS.jumpVelocity);
         sfx.jump();
       }
     }
@@ -161,24 +162,25 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       this.ammo--;
       if (this.ammo <= 0) {
         this.setWeapon('tamarindo');
-        this.gs.say(this, 'Finiti! Torno al tamarindo, il classico.');
+        this.gs.say(this, line('paolone', 'munizioni_finite'));
       }
     }
     this.gs.syncHud();
   }
 
   private panzata(time: number) {
-    this.panzaReady = time + 550;
-    this.poseUntil = time + 260;
+    const { cooldownMs, durationMs, lunge, damage, reach } = STATS.panzata;
+    this.panzaReady = time + cooldownMs;
+    this.poseUntil = time + durationMs;
     this.poseFrame = TORSO.panza;
-    (this.body as Phaser.Physics.Arcade.Body).setVelocityX(this.facing * 170);
+    (this.body as Phaser.Physics.Arcade.Body).setVelocityX(this.facing * lunge);
     sfx.panzata();
-    const hit = new Phaser.Geom.Rectangle(this.facing > 0 ? this.x : this.x - 28, this.y - 28, 28, 24);
-    this.gs.meleeHit(hit, 3, this.facing);
+    const hit = new Phaser.Geom.Rectangle(this.facing > 0 ? this.x : this.x - reach, this.y - 28, reach, 24);
+    this.gs.meleeHit(hit, damage, this.facing);
   }
 
   setWeapon(f: Flavour) {
-    this.weapon = WEAPONS[f];
+    this.weapon = CONTENT.weapons[f];
     this.ammo = this.weapon.ammo;
     this.gs.syncHud();
   }
@@ -191,7 +193,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   hurt(fromX: number) {
     if (this.invulnerable) return;
     this.hp--;
-    this.invulnUntil = this.scene.time.now + 1300;
+    this.invulnUntil = this.scene.time.now + STATS.invulnerabilityMs;
     this.poseUntil = this.scene.time.now + 350;
     this.poseFrame = TORSO.hurt;
     const dir = this.x < fromX ? -1 : 1;

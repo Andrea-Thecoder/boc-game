@@ -1,27 +1,37 @@
 import Phaser from 'phaser';
 import { sfx } from '../../audio/sfx';
+import { roll } from '../../core/random';
+import { CONTENT, line } from '../../content';
 import { EnemyBullet } from '../EnemyBullet';
 import type GameScene from '../../scenes/GameScene';
 import type { Player } from '../Player';
 import { Enemy } from './Enemy';
 
 /** Chierichetto: keeps his distance and lobs consecrated wafers. */
+const CHIERICHETTO = CONTENT.enemies.chierichetto;
+const BEGHINA = CONTENT.enemies.beghina;
+const SACRESTANO = CONTENT.enemies.sacrestano;
+
 export class Chierichetto extends Enemy {
   protected readonly deadFrame = 3;
-  protected readonly score = 100;
-  protected readonly screams = ['MAMMAAA!', 'NON VALE!', 'LO DICO AL MONSIGNORE!', 'SANTO CIELO!'] as const;
+  protected readonly score = CHIERICHETTO.score;
   private nextThrow = 0;
   private throwingUntil = 0;
 
   constructor(gs: GameScene, x: number, y: number) {
-    super(gs, x, y, 'chierichetto', 2);
+    super(gs, x, y, 'chierichetto', CHIERICHETTO.hp);
     this.setBodyBox(10, 20, 5, 4);
-    this.nextThrow = gs.time.now + 900 + Math.random() * 900;
+    this.nextThrow = gs.time.now + roll(CHIERICHETTO.attack.firstDelayMs);
     this.play('chierichetto-walk');
+  }
+
+  protected deathScream() {
+    return line('chierichetto', 'morte');
   }
 
   protected think(time: number, p: Player) {
     const body = this.body as Phaser.Physics.Arcade.Body;
+    const { keepDistance, walkSpeed, retreatSpeed, attack } = CHIERICHETTO;
     const dx = p.x - this.x;
     const dist = Math.abs(dx);
     this.faceTowards(p.x);
@@ -30,18 +40,18 @@ export class Chierichetto extends Enemy {
       return;
     }
     let vx = 0;
-    if (dist > 110) vx = Math.sign(dx) * 58;
-    else if (dist < 60) vx = -Math.sign(dx) * 48;
+    if (dist > keepDistance[1]) vx = Math.sign(dx) * walkSpeed;
+    else if (dist < keepDistance[0]) vx = -Math.sign(dx) * retreatSpeed;
     body.setVelocityX(vx);
     if (vx !== 0) this.play('chierichetto-walk', true);
     else this.stop().setFrame(0);
-    if (time > this.nextThrow && dist < 220) {
-      this.nextThrow = time + 1600 + Math.random() * 900;
-      this.throwingUntil = time + 300;
+    if (time > this.nextThrow && dist < attack.range) {
+      this.nextThrow = time + roll(attack.cooldownMs);
+      this.throwingUntil = time + attack.windupMs;
       this.stop().setFrame(2);
       const sx = this.x + this.facing * 6,
         sy = this.y - 21;
-      const [vxB, vyB] = EnemyBullet.lob(sx, sy, p.x, p.y - 14, 0.85, EnemyBullet.gravityOf('ostia'));
+      const [vxB, vyB] = EnemyBullet.lob(sx, sy, p.x, p.y - 14, attack.flightTime, EnemyBullet.gravityOf('ostia'));
       this.gs.addEnemyBullet(new EnemyBullet(this.gs, 'ostia', sx, sy, vxB, vyB));
       sfx.ostia();
     }
@@ -51,28 +61,32 @@ export class Chierichetto extends Enemy {
 /** Beghina: slow, stubborn, whips you with her rosary. */
 export class Beghina extends Enemy {
   protected readonly deadFrame = 4;
-  protected readonly score = 150;
-  protected readonly screams = ['MALEDUCATO!', 'SANTA PAZIENZA!', 'AIUTO, UN CICCIONE!', "PREGHERO' PER TE!"] as const;
+  protected readonly score = BEGHINA.score;
   private phase: 'walk' | 'windup' | 'whip' = 'walk';
   private stateUntil = 0;
   private hitDone = false;
 
   constructor(gs: GameScene, x: number, y: number) {
-    super(gs, x, y, 'beghina', 3);
+    super(gs, x, y, 'beghina', BEGHINA.hp);
     this.setBodyBox(10, 20, 11, 4);
     this.play('beghina-walk');
   }
 
+  protected deathScream() {
+    return line('beghina', 'morte');
+  }
+
   protected think(time: number, p: Player) {
     const body = this.body as Phaser.Physics.Arcade.Body;
+    const { walkSpeed, stopDistance, attack } = BEGHINA;
     const dx = p.x - this.x;
     if (this.phase === 'walk') {
       this.faceTowards(p.x);
-      body.setVelocityX(Math.abs(dx) > 26 ? Math.sign(dx) * 40 : 0);
+      body.setVelocityX(Math.abs(dx) > stopDistance ? Math.sign(dx) * walkSpeed : 0);
       this.play('beghina-walk', true);
-      if (Math.abs(dx) < 34 && Math.abs(p.y - this.y) < 26) {
+      if (Math.abs(dx) < attack.reach && Math.abs(p.y - this.y) < attack.verticalReach) {
         this.phase = 'windup';
-        this.stateUntil = time + 380;
+        this.stateUntil = time + attack.windupMs;
         body.setVelocityX(0);
         this.stop().setFrame(2);
       }
@@ -80,7 +94,7 @@ export class Beghina extends Enemy {
       body.setVelocityX(0);
       if (time > this.stateUntil) {
         this.phase = 'whip';
-        this.stateUntil = time + 260;
+        this.stateUntil = time + attack.whipMs;
         this.hitDone = false;
         this.setFrame(3);
         sfx.whip();
@@ -103,28 +117,34 @@ export class Beghina extends Enemy {
 /** Sacrestano: swings the thurible and releases clouds of toxic incense. */
 export class Sacrestano extends Enemy {
   protected readonly deadFrame = 2;
-  protected readonly score = 200;
-  protected readonly screams = ['UFFA!', "L'INCENSO NO!", 'CHIAMO IL PARROCO!'] as const;
+  protected readonly score = SACRESTANO.score;
   private nextPuff = 0;
 
   constructor(gs: GameScene, x: number, y: number) {
-    super(gs, x, y, 'sacrestano', 4);
+    super(gs, x, y, 'sacrestano', SACRESTANO.hp);
     this.setBodyBox(10, 24, 7, 4);
-    this.nextPuff = gs.time.now + 1200;
+    this.nextPuff = gs.time.now + SACRESTANO.attack.firstDelayMs;
     this.play('sacrestano-swing');
+  }
+
+  protected deathScream() {
+    return line('sacrestano', 'morte');
   }
 
   protected think(time: number, p: Player) {
     const body = this.body as Phaser.Physics.Arcade.Body;
+    const { walkSpeed, keepDistance, attack } = SACRESTANO;
     const dx = p.x - this.x;
     this.faceTowards(p.x);
-    body.setVelocityX(Math.abs(dx) > 120 ? Math.sign(dx) * 22 : 0);
-    if (time > this.nextPuff && Math.abs(dx) < 240) {
-      this.nextPuff = time + 2600 + Math.random() * 800;
+    body.setVelocityX(Math.abs(dx) > keepDistance ? Math.sign(dx) * walkSpeed : 0);
+    if (time > this.nextPuff && Math.abs(dx) < attack.range) {
+      this.nextPuff = time + roll(attack.cooldownMs);
       const sx = this.x + this.facing * 12,
         sy = this.y - 14;
       const ang = Math.atan2(p.y - 16 - sy, p.x - sx);
-      this.gs.addEnemyBullet(new EnemyBullet(this.gs, 'fumo', sx, sy, Math.cos(ang) * 42, Math.sin(ang) * 42));
+      this.gs.addEnemyBullet(
+        new EnemyBullet(this.gs, 'fumo', sx, sy, Math.cos(ang) * attack.smokeSpeed, Math.sin(ang) * attack.smokeSpeed),
+      );
       sfx.smoke();
     }
   }

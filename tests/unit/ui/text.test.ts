@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clean, kappa, pick } from '../../../src/ui/text';
+import { clean, kappa } from '../../../src/ui/text';
 
 describe('kappa', () => {
   it.each([
@@ -91,18 +91,5 @@ describe('clean', () => {
 
     // Assert
     expect(result).toBe('MISSIONE 1\nVIA ROMA');
-  });
-});
-
-describe('pick', () => {
-  it('pick_singleElementList_returnsThatElement', () => {
-    // Arrange
-    const list = ['tamarindo'] as const;
-
-    // Act
-    const result = pick(list);
-
-    // Assert
-    expect(result).toBe('tamarindo');
   });
 });

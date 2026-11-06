@@ -1,0 +1,14 @@
+{
+  "ostia": {
+    "gravity": 300
+  },
+  "goccia": {
+    "gravity": 360
+  },
+  "fumo": {
+    "gravity": 0
+  },
+  "campana": {
+    "gravity": 520
+  }
+}

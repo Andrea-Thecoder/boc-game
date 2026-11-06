@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BOSS_ARENA_X, GROUND_Y } from '../../config';
 import { sfx } from '../../audio/sfx';
+import { CONTENT, line, lineById } from '../../content';
 import { EnemyBullet } from '../EnemyBullet';
 import type GameScene from '../../scenes/GameScene';
 import type { Player } from '../Player';
@@ -9,17 +10,19 @@ import { Chierichetto } from './Faithful';
 
 type Mode = 'intro' | 'waiting' | 'fight' | 'telegraph' | 'charge' | 'return';
 
+const BOSS = CONTENT.boss;
+
 /**
  * Monsignor Angelius Panza, 88 years old, corrupt to the bone, on his armoured Papamobile.
  * Three phases: holy water barrage → summons altar boys → bells from the sky and ramming charges.
  */
 export class MonsignorPanza extends Enemy {
   protected readonly deadFrame = 2;
-  protected readonly score = 5000;
-  protected readonly screams = [] as const;
-  readonly maxHp = 110;
+  protected readonly score = BOSS.score;
+  readonly maxHp = BOSS.hp;
   private mode: Mode = 'intro';
-  private phase = 1;
+  /** index in BOSS.phases */
+  private phase = 0;
   private targetX = BOSS_ARENA_X + 250;
   private nextVolley = 0;
   private nextSummon = 0;
@@ -29,12 +32,20 @@ export class MonsignorPanza extends Enemy {
   private faceUntil = 0;
 
   constructor(gs: GameScene) {
-    super(gs, BOSS_ARENA_X + 372, GROUND_Y, 'panza', 110);
+    super(gs, BOSS_ARENA_X + 372, GROUND_Y, 'panza', BOSS.hp);
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setAllowGravity(false).setImmovable(true);
     body.setSize(80, 54).setOffset(8, 8);
     this.setDepth(44);
-    this.setVelocityX(-70);
+    this.setVelocityX(-BOSS.entrySpeed);
+  }
+
+  protected deathScream() {
+    return line('monsignor-panza', 'sconfitta');
+  }
+
+  private get stats() {
+    return BOSS.phases[this.phase];
   }
 
   get isBoss() {
@@ -49,10 +60,10 @@ export class MonsignorPanza extends Enemy {
   startFight() {
     const t = this.gs.time.now;
     this.mode = 'fight';
-    this.nextVolley = t + 800;
-    this.nextSummon = t + 4000;
-    this.nextBells = t + 2500;
-    this.nextCharge = t + 5000;
+    this.nextVolley = t + BOSS.firstAttackMs.volley;
+    this.nextSummon = t + BOSS.firstAttackMs.summon;
+    this.nextBells = t + BOSS.firstAttackMs.bells;
+    this.nextCharge = t + BOSS.firstAttackMs.charge;
   }
 
   protected think(time: number, p: Player) {
@@ -77,7 +88,7 @@ export class MonsignorPanza extends Enemy {
         this.x += Math.random() < 0.5 ? -1 : 1;
         if (time > this.modeUntil) {
           this.mode = 'charge';
-          body.setVelocityX(-270);
+          body.setVelocityX(-BOSS.charge.speed);
           this.gs.cameras.main.shake(300, 0.008);
         }
         return;
@@ -87,12 +98,12 @@ export class MonsignorPanza extends Enemy {
           this.gs.cameras.main.shake(200, 0.015);
           sfx.land();
           this.mode = 'return';
-          this.modeUntil = time + 500;
+          this.modeUntil = time + BOSS.charge.pauseMs;
         }
         return;
       case 'return':
         if (time < this.modeUntil) return;
-        body.setVelocityX(110);
+        body.setVelocityX(BOSS.charge.returnSpeed);
         if (this.x >= BOSS_ARENA_X + 240) {
           body.setVelocityX(0);
           this.mode = 'fight';
@@ -101,53 +112,55 @@ export class MonsignorPanza extends Enemy {
     }
 
     // --- regular fight -------------------------------------------------------------------------
-    const speed = [0, 35, 50, 70][this.phase];
+    const phase = this.stats;
+    const speed = phase.speed;
     if (Math.abs(this.x - this.targetX) < 4) {
       this.targetX = BOSS_ARENA_X + 170 + Math.random() * 120;
     }
     body.setVelocityX(Math.sign(this.targetX - this.x) * speed);
 
     if (time > this.nextVolley) {
-      this.nextVolley = time + [0, 1500, 1250, 1050][this.phase];
+      this.nextVolley = time + phase.volleyEveryMs;
       this.volley(p);
     }
-    if (this.phase >= 2 && time > this.nextSummon) {
-      this.nextSummon = time + 5500;
-      if (this.gs.aliveEnemies() < 3) {
+    if (phase.summons && time > this.nextSummon) {
+      this.nextSummon = time + BOSS.summon.everyMs;
+      if (this.gs.aliveEnemies() < BOSS.summon.maxAlive) {
         this.laugh(700);
-        this.gs.say(this, 'Venite, figlioli!', 900);
+        this.gs.say(this, line('monsignor-panza', 'evoca'), 900);
         this.gs.addEnemy(new Chierichetto(this.gs, BOSS_ARENA_X + 335, GROUND_Y - 2));
       }
     }
-    if (this.phase >= 3 && time > this.nextBells) {
-      this.nextBells = time + 3400;
+    if (phase.bells && time > this.nextBells) {
+      this.nextBells = time + BOSS.bells.everyMs;
       sfx.bell();
-      [-44, 0, 44].forEach((off, i) => {
-        this.gs.time.delayedCall(i * 160, () => {
+      BOSS.bells.offsets.forEach((off, i) => {
+        this.gs.time.delayedCall(i * BOSS.bells.staggerMs, () => {
           const x = Phaser.Math.Clamp(p.x + off, BOSS_ARENA_X + 10, BOSS_ARENA_X + 310);
           this.gs.addEnemyBullet(new EnemyBullet(this.gs, 'campana', x, -12, 0, 0));
         });
       });
     }
-    if (this.phase >= 3 && time > this.nextCharge) {
-      this.nextCharge = time + 7000;
+    if (phase.charges && time > this.nextCharge) {
+      this.nextCharge = time + BOSS.charge.everyMs;
       this.mode = 'telegraph';
-      this.modeUntil = time + 800;
+      this.modeUntil = time + BOSS.charge.telegraphMs;
       this.laugh(800);
-      this.gs.say(this, 'In nomine Panzae!', 900, true);
+      this.gs.say(this, line('monsignor-panza', 'carica'), 900, true);
     }
   }
 
   private volley(p: Player) {
     const sx = this.x - 46,
       sy = this.y - 32;
-    const n = this.phase === 1 ? 3 : 5;
+    const { spacing, flightTime, flightTimeStep } = BOSS.volley;
+    const n = this.stats.volleyCount;
     for (let i = 0; i < n; i++) {
-      const t = 0.55 + i * 0.16;
+      const t = flightTime + i * flightTimeStep;
       const [vx, vy] = EnemyBullet.lob(
         sx,
         sy,
-        p.x + (i - (n - 1) / 2) * 18,
+        p.x + (i - (n - 1) / 2) * spacing,
         p.y - 8,
         t,
         EnemyBullet.gravityOf('goccia'),
@@ -172,13 +185,11 @@ export class MonsignorPanza extends Enemy {
     this.faceUntil = this.gs.time.now + 160;
     sfx.bossHit();
     this.gs.syncHud();
-    const ratio = this.hp / this.maxHp;
-    if (this.phase === 1 && ratio <= 0.66) {
-      this.phase = 2;
-      this.gs.say(this, 'Basta giocare! Chierichetti, a me!', 1500, true);
-    } else if (this.phase === 2 && ratio <= 0.33) {
-      this.phase = 3;
-      this.gs.say(this, 'Suonate le campane... A MORTO!', 1500, true);
+    // at most one phase change per hit, like a real boss "stagger"
+    const next = BOSS.phases[this.phase + 1];
+    if (next && this.hp / this.maxHp <= next.hpRatio) {
+      this.phase++;
+      if (next.line) this.gs.say(this, lineById('monsignor-panza', next.line), 1500, true);
     }
     if (this.hp <= 0) this.die();
   }
@@ -206,7 +217,7 @@ export class MonsignorPanza extends Enemy {
         .setCrop(26, 0, 48, 34)
         .setOrigin(50 / 96, 17 / 64)
         .setDepth(70);
-      this.gs.say(panza, 'Maledetto sukkinooooo!', 1600, true);
+      this.gs.say(panza, this.deathScream(), 1600, true);
       this.gs.tweens.add({
         targets: panza,
         y: -60,

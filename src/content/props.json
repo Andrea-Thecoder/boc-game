@@ -1,0 +1,51 @@
+{
+  "cartello": {
+    "depth": 25,
+    "groundOffset": 1,
+    "labelDy": -22
+  },
+  "fico": {
+    "depth": 25,
+    "groundOffset": 1
+  },
+  "lampione": {
+    "depth": 15,
+    "groundOffset": 1
+  },
+  "cassetta": {
+    "depth": 30,
+    "groundOffset": 0,
+    "platform": {
+      "dx": 0,
+      "dy": -8,
+      "w": 18
+    }
+  },
+  "ape": {
+    "depth": 30,
+    "groundOffset": 1,
+    "platform": {
+      "dx": -7,
+      "dy": -16,
+      "w": 28
+    }
+  },
+  "fontana": {
+    "depth": 30,
+    "groundOffset": 1,
+    "platform": {
+      "dx": 0,
+      "dy": -14,
+      "w": 36
+    }
+  },
+  "balcone": {
+    "depth": 20,
+    "groundOffset": 1,
+    "platform": {
+      "dx": 0,
+      "dy": -10,
+      "w": 48
+    }
+  }
+}

@@ -50,6 +50,23 @@ Flusso di lavoro: branch dedicato → pull request verso `main` → CI verde →
   il tempo avanza solo con `step(frames)`.
 - Gli hook che servono solo ai test vivono in `GameScene` come metodi `debug*` e si chiamano solo da `testHooks.ts`.
 
+### Contenuti di gioco (`src/content/`)
+
+- **Numeri di bilanciamento e testi stanno nei JSON**, mai nel codice:
+  `weapons.json`, `player.json`, `enemies.json`, `projectiles.json`, `boss-panza.json`, `props.json` (catalogo degli
+  oggetti di scena), `levels/<livello>.json` (oggetti, pickup, ondate, drop delle nonne), `dialoghi/<personaggio>.json`.
+- **Nel codice resta solo la geometria legata agli sprite** (offset delle mani, hitbox, punti di lancio, posizioni
+  nell'arena del boss): cambia con la pixel art, non con il bilanciamento.
+- Ogni file è validato con **zod** (`content/schemas.ts`) all'avvio, più i controlli incrociati in `content/validate.ts`
+  (ondata → battuta esistente, oggetto → tipo esistente, fase del boss → battuta esistente...). Un JSON sbagliato blocca
+  il gioco all'avvio con un messaggio che indica file e campo.
+- Si accede ai contenuti solo da `src/content/index.ts`: `CONTENT` per i dati, `line(personaggio, id)` per le battute.
+  `line()` controlla l'id **a compile time** (le chiavi vengono dal JSON); per gli id che arrivano dai dati si usa
+  `lineById()`, validato all'avvio. Una battuta con più varianti (array) ne restituisce una a caso.
+- Le battute di Paolone si scrivono in italiano normale: le K le aggiunge `kappa()` quando vengono mostrate.
+- Aggiungere un campo: schema in `schemas.ts` → valore nel JSON → uso nel codice → test in `tests/unit/content/`.
+- `content/`, `core/` e `ui/text.ts` sono moduli puri (niente Phaser): si testano con Vitest.
+
 ---
 
 ## Architettura target
@@ -97,7 +114,8 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
 - `scenes/GameScene.ts` è una god class: camera, ondate, collisioni, effetti, boss, HUD sync. → da spezzare nei sistemi
 - Le entità ricevono `GameScene` e ne chiamano i metodi. → da sostituire con l'EventBus
 - L'IA usa campi `phase`/`stateUntil` ad hoc. → da migrare su StateMachine
-- Livello, armi e nemici sono in TS (`level/level1.ts`, `weapons.ts`). → JSON e Tiled
+- Contenuti già in JSON validati (armi, Paolone, nemici, boss, oggetti, livello 1, dialoghi). Il livello si scrive
+  ancora a mano in JSON: passerà a Tiled nella fase 3.
 - `core/` è pronto (EventBus, StateMachine, Pool, testati) ma il gioco non lo usa ancora: il collegamento è nei passi 4-6.
 - Grafica e audio sono interamente procedurali (`art/`, `audio/`). Restano come segnaposto finché non arriva la pixel art vera.
 
@@ -110,7 +128,7 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
   Dopo ogni passo devono passare `npm run check` e lo smoke test e2e.
   - [x] Passo 1: Vitest in CI, test di `kappa()` / `clean()` / `pick()`
   - [x] Passo 2: `core/EventBus`, `core/StateMachine`, `core/Pool` con unit test (pronti, **non ancora usati dal gioco**)
-  - [ ] Passo 3: contenuti in JSON validati con zod (armi, nemici, livello 1, dialoghi)
+  - [x] Passo 3: contenuti in JSON validati con zod (armi, Paolone, nemici, proiettili, boss, oggetti, livello 1, dialoghi)
   - [ ] Passo 4: `GameScene` spezzata nei sistemi
   - [ ] Passo 5: entità sull'EventBus, proiettili e popup in pool
   - [ ] Passo 6: IA dei nemici e del boss su StateMachine

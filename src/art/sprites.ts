@@ -1,6 +1,7 @@
 import type Phaser from 'phaser';
 import { Painter } from './painter';
 import { P } from './palette';
+import type { Flavour } from '../content/schemas';
 
 type Draw = (p: Painter, frame: number) => void;
 
@@ -365,13 +366,13 @@ function panza(p: Painter, f: number) {
 // PROJECTILES, PICKUPS, UI
 // ---------------------------------------------------------------------------------------------
 
-export const FLAVOURS = {
+/** Colour of each juice flavour (the flavour list itself is defined by the content, see content/schemas.ts). */
+export const FLAVOURS: Record<Flavour, string> = {
   tamarindo: P.tamarindo,
   pera: P.pera,
   ace: P.ace,
   pesca: P.pesca,
-} as const;
-export type Flavour = keyof typeof FLAVOURS;
+};
 
 function sukkino(color: string): Draw {
   return (p) => {

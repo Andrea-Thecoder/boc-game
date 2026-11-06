@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import { sfx } from '../../audio/sfx';
-import { pick } from '../../ui/text';
 import type GameScene from '../../scenes/GameScene';
 import type { Player } from '../Player';
 
@@ -12,7 +11,8 @@ export abstract class Enemy extends Phaser.Physics.Arcade.Sprite {
   protected gs: GameScene;
   protected abstract readonly deadFrame: number;
   protected abstract readonly score: number;
-  protected abstract readonly screams: readonly string[];
+  /** What the enemy shouts while flying away (from content/dialoghi/<enemy>.json). */
+  protected abstract deathScream(): string;
 
   constructor(gs: GameScene, x: number, y: number, texture: string, hp: number) {
     super(gs, x, y, texture, 0);
@@ -55,7 +55,7 @@ export abstract class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setAngularVelocity(dir * (400 + Math.random() * 400));
     sfx.enemyDie();
     this.gs.onEnemyKilled(this, this.score);
-    if (Math.random() < 0.6) this.gs.say(this, pick(this.screams), 1100, true);
+    if (Math.random() < 0.6) this.gs.say(this, this.deathScream(), 1100, true);
     this.gs.time.delayedCall(2500, () => this.destroy());
   }
 

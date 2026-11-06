@@ -1,7 +1,6 @@
 import Phaser from 'phaser';
 import { W, H } from '../config';
-import { WEAPONS } from '../weapons';
-import type { Flavour } from '../art/sprites';
+import { CONTENT, type Flavour } from '../content';
 
 /** Overlay: hearts, current sukkino + ammo, score, boss health bar. */
 export default class HudScene extends Phaser.Scene {
@@ -45,7 +44,7 @@ export default class HudScene extends Phaser.Scene {
     const weapon = (r.get('weapon') ?? 'tamarindo') as Flavour;
     const ammo = r.get('ammo') as number;
     this.weaponIcon.setTexture(`sukkino-${weapon}`);
-    this.weaponText.setText(`${WEAPONS[weapon].name} X ${ammo === Infinity ? '~' : ammo}`);
+    this.weaponText.setText(`${CONTENT.weapons[weapon].name} X ${ammo === Infinity ? '~' : ammo}`);
     this.scoreText.setText(`PUNTI ${String(r.get('score') ?? 0).padStart(6, '0')}`);
 
     const boss = r.get('bossHp') as number;
