@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BOSS_ARENA_X, GROUND_Y } from '../../config';
 import { sfx } from '../../audio/sfx';
+import { StateMachine } from '../../core/StateMachine';
 import { CONTENT, line, lineById } from '../../content';
 import { bulletGravity } from '../EnemyBullet';
 import type { GameBus } from '../../systems/events';
@@ -8,9 +9,37 @@ import { lob } from '../../systems/rules/ballistics';
 import type { Player } from '../Player';
 import { Enemy } from './Enemy';
 
-type Mode = 'intro' | 'waiting' | 'fight' | 'telegraph' | 'charge' | 'return';
-
 const BOSS = CONTENT.boss;
+
+/** Arena geometry (relative to BOSS_ARENA_X): tied to the arena layout, not to balancing. */
+const ARENA = {
+  /** spawn point: must stay within 60 px of the screen edge, or the AI is frozen (see CLAUDE.md) */
+  spawn: 372,
+  /** where he stops for the intro dialogue */
+  stop: 250,
+  /** patrol range during the fight */
+  patrol: [170, 290] as const,
+  /** a charge ends here, near the left wall */
+  chargeEnd: 52,
+  /** after a charge he drives back to here */
+  home: 240,
+  /** falling bells land within this range */
+  bells: [10, 310] as const,
+} as const;
+
+/**
+ * States of the boss:
+ *
+ *   entering ──(reached stop)──▶ waiting ──(startFight)──▶ fighting
+ *   fighting ──(charge ready)──▶ telegraph ──(telegraphMs)──▶ charge ──(hits the wall)──▶ recover
+ *   recover ──(pauseMs)──▶ returning ──(back home)──▶ fighting
+ *   any ──(hp 0)──▶ defeated
+ *
+ * Attack cooldowns (volley, summon, bells, charge) are timers that keep running during `fighting`.
+ */
+type PanzaState = 'entering' | 'waiting' | 'fighting' | 'telegraph' | 'charge' | 'recover' | 'returning' | 'defeated';
+
+const COMBAT_STATES: ReadonlySet<PanzaState> = new Set(['fighting', 'telegraph', 'charge', 'recover', 'returning']);
 
 /**
  * Monsignor Angelius Panza, 88 years old, corrupt to the bone, on his armoured Papamobile.
@@ -20,24 +49,75 @@ export class MonsignorPanza extends Enemy {
   protected readonly deadFrame = 2;
   protected readonly score = BOSS.score;
   readonly maxHp = BOSS.hp;
-  private mode: Mode = 'intro';
   /** index in BOSS.phases */
   private phase = 0;
-  private targetX = BOSS_ARENA_X + 250;
+  private targetX = BOSS_ARENA_X + ARENA.stop;
   private nextVolley = 0;
   private nextSummon = 0;
   private nextBells = 0;
   private nextCharge = 0;
-  private modeUntil = 0;
+  /** until when the current facial expression (laugh, pain) stays on */
   private faceUntil = 0;
+  private readonly brain: StateMachine<PanzaState, MonsignorPanza>;
 
   constructor(scene: Phaser.Scene, bus: GameBus, target: Player) {
-    super(scene, bus, target, BOSS_ARENA_X + 372, GROUND_Y, 'panza', BOSS.hp);
+    super(scene, bus, target, BOSS_ARENA_X + ARENA.spawn, GROUND_Y, 'panza', BOSS.hp);
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setAllowGravity(false).setImmovable(true);
     body.setSize(80, 54).setOffset(8, 8);
     this.setDepth(44);
-    this.setVelocityX(-BOSS.entrySpeed);
+    this.brain = new StateMachine<PanzaState, MonsignorPanza>(
+      this,
+      {
+        entering: {
+          enter: () => this.setVelocityX(-BOSS.entrySpeed),
+          update: () => (this.x <= BOSS_ARENA_X + ARENA.stop ? 'waiting' : undefined),
+        },
+        waiting: {
+          enter: () => {
+            this.setVelocityX(0);
+            this.bus.emit('boss:arrived');
+          },
+        },
+        fighting: { update: () => this.fight() },
+        telegraph: {
+          enter: () => {
+            this.nextCharge = this.scene.time.now + BOSS.charge.everyMs;
+            this.laugh(800);
+            this.say(line('monsignor-panza', 'carica'), 900, true);
+          },
+          update: (_, fsm) => {
+            this.setVelocityX(0);
+            this.x += Math.random() < 0.5 ? -1 : 1; // revving the engine
+            return fsm.elapsed > BOSS.charge.telegraphMs ? 'charge' : undefined;
+          },
+        },
+        charge: {
+          enter: () => {
+            this.setVelocityX(-BOSS.charge.speed);
+            this.bus.emit('fx:shake', { durationMs: 300, intensity: 0.008 });
+          },
+          update: () => (this.x <= BOSS_ARENA_X + ARENA.chargeEnd ? 'recover' : undefined),
+        },
+        recover: {
+          enter: () => {
+            this.setVelocityX(0);
+            this.bus.emit('fx:shake', { durationMs: 200, intensity: 0.015 });
+            sfx.land();
+          },
+          update: (_, fsm) => (fsm.elapsed >= BOSS.charge.pauseMs ? 'returning' : undefined),
+        },
+        returning: {
+          update: () => {
+            this.setVelocityX(BOSS.charge.returnSpeed);
+            return this.x >= BOSS_ARENA_X + ARENA.home ? 'fighting' : undefined;
+          },
+          exit: () => this.setVelocityX(0),
+        },
+        defeated: {},
+      },
+      'entering',
+    );
   }
 
   protected deathScream() {
@@ -52,72 +132,39 @@ export class MonsignorPanza extends Enemy {
     return true;
   }
 
+  /** True while he can hurt and be hurt (not during the entrance, the intro dialogue or after defeat). */
   get fighting() {
-    return this.mode !== 'intro' && this.mode !== 'waiting' && !this.dead;
+    return COMBAT_STATES.has(this.brain.current);
   }
 
-  /** Called by the scene once the intro dialogue is over. */
+  /** Called by the arena once the intro dialogue is over. */
   startFight() {
     const t = this.scene.time.now;
-    this.mode = 'fight';
     this.nextVolley = t + BOSS.firstAttackMs.volley;
     this.nextSummon = t + BOSS.firstAttackMs.summon;
     this.nextBells = t + BOSS.firstAttackMs.bells;
     this.nextCharge = t + BOSS.firstAttackMs.charge;
+    this.brain.transition('fighting');
   }
 
-  protected think(time: number, p: Player) {
+  protected think(time: number, deltaMs: number) {
     const body = this.body as Phaser.Physics.Arcade.Body;
     // wheels bounce a bit, it's an old vehicle
     this.y = GROUND_Y + (Math.floor(time / 120) % 2 === 0 && body.velocity.x !== 0 ? -1 : 0);
+    if (time > this.faceUntil) this.setFrame(0);
+    this.brain.update(deltaMs);
+  }
 
-    if (time > this.faceUntil && !this.dead) this.setFrame(0);
-
-    switch (this.mode) {
-      case 'intro':
-        if (this.x <= BOSS_ARENA_X + 250) {
-          body.setVelocityX(0);
-          this.mode = 'waiting';
-          this.bus.emit('boss:arrived');
-        }
-        return;
-      case 'waiting':
-        return;
-      case 'telegraph':
-        body.setVelocityX(0);
-        this.x += Math.random() < 0.5 ? -1 : 1;
-        if (time > this.modeUntil) {
-          this.mode = 'charge';
-          body.setVelocityX(-BOSS.charge.speed);
-          this.bus.emit('fx:shake', { durationMs: 300, intensity: 0.008 });
-        }
-        return;
-      case 'charge':
-        if (this.x <= BOSS_ARENA_X + 52) {
-          body.setVelocityX(0);
-          this.bus.emit('fx:shake', { durationMs: 200, intensity: 0.015 });
-          sfx.land();
-          this.mode = 'return';
-          this.modeUntil = time + BOSS.charge.pauseMs;
-        }
-        return;
-      case 'return':
-        if (time < this.modeUntil) return;
-        body.setVelocityX(BOSS.charge.returnSpeed);
-        if (this.x >= BOSS_ARENA_X + 240) {
-          body.setVelocityX(0);
-          this.mode = 'fight';
-        }
-        return;
-    }
-
-    // --- regular fight -------------------------------------------------------------------------
+  /** Regular fight: patrols the arena and fires every attack whose cooldown is over. */
+  private fight(): PanzaState | undefined {
+    const time = this.scene.time.now;
+    const p = this.target;
     const phase = this.stats;
-    const speed = phase.speed;
+
     if (Math.abs(this.x - this.targetX) < 4) {
-      this.targetX = BOSS_ARENA_X + 170 + Math.random() * 120;
+      this.targetX = BOSS_ARENA_X + ARENA.patrol[0] + Math.random() * (ARENA.patrol[1] - ARENA.patrol[0]);
     }
-    body.setVelocityX(Math.sign(this.targetX - this.x) * speed);
+    this.setVelocityX(Math.sign(this.targetX - this.x) * phase.speed);
 
     if (time > this.nextVolley) {
       this.nextVolley = time + phase.volleyEveryMs;
@@ -130,26 +177,14 @@ export class MonsignorPanza extends Enemy {
     }
     if (phase.bells && time > this.nextBells) {
       this.nextBells = time + BOSS.bells.everyMs;
-      sfx.bell();
-      BOSS.bells.offsets.forEach((off, i) => {
-        this.scene.time.delayedCall(i * BOSS.bells.staggerMs, () => {
-          const x = Phaser.Math.Clamp(p.x + off, BOSS_ARENA_X + 10, BOSS_ARENA_X + 310);
-          this.bus.emit('enemy:fired', { kind: 'campana', x, y: -12, vx: 0, vy: 0 });
-        });
-      });
+      this.ringBells(p);
     }
-    if (phase.charges && time > this.nextCharge) {
-      this.nextCharge = time + BOSS.charge.everyMs;
-      this.mode = 'telegraph';
-      this.modeUntil = time + BOSS.charge.telegraphMs;
-      this.laugh(800);
-      this.say(line('monsignor-panza', 'carica'), 900, true);
-    }
+    return phase.charges && time > this.nextCharge ? 'telegraph' : undefined;
   }
 
   private volley(p: Player) {
-    const sx = this.x - 46,
-      sy = this.y - 32;
+    const sx = this.x - 46;
+    const sy = this.y - 32;
     const { spacing, flightTime, flightTimeStep } = BOSS.volley;
     const n = this.stats.volleyCount;
     for (let i = 0; i < n; i++) {
@@ -158,6 +193,17 @@ export class MonsignorPanza extends Enemy {
       this.bus.emit('enemy:fired', { kind: 'goccia', x: sx, y: sy, vx, vy });
     }
     sfx.holyWater();
+  }
+
+  /** Bells fall around Paolone, one after the other. */
+  private ringBells(p: Player) {
+    sfx.bell();
+    BOSS.bells.offsets.forEach((off, i) => {
+      this.scene.time.delayedCall(i * BOSS.bells.staggerMs, () => {
+        const x = Phaser.Math.Clamp(p.x + off, BOSS_ARENA_X + ARENA.bells[0], BOSS_ARENA_X + ARENA.bells[1]);
+        this.bus.emit('enemy:fired', { kind: 'campana', x, y: -12, vx: 0, vy: 0 });
+      });
+    });
   }
 
   private say(text: string, durationMs: number, shout = false) {
@@ -192,7 +238,7 @@ export class MonsignorPanza extends Enemy {
 
   protected die() {
     this.dead = true;
-    this.mode = 'waiting';
+    this.brain.transition('defeated');
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setVelocity(0, 0);
     body.checkCollision.none = true;

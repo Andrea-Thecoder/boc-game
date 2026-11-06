@@ -33,8 +33,11 @@ export abstract class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setOrigin(0.5, 1).setDepth(45);
   }
 
-  /** AI tick, only called while alive and near the camera. */
-  protected abstract think(time: number, player: Player): void;
+  /**
+   * AI tick, only called while alive and near the camera.
+   * Subclasses advance their StateMachine here with `deltaMs`.
+   */
+  protected abstract think(time: number, deltaMs: number, player: Player): void;
 
   get isBoss() {
     return false;
@@ -76,7 +79,7 @@ export abstract class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.dead) return;
     const cam = this.scene.cameras.main;
     const near = this.x > cam.scrollX - 60 && this.x < cam.scrollX + cam.width + 60;
-    if (near && !this.target.dead) this.think(time, this.target);
+    if (near && !this.target.dead) this.think(time, delta, this.target);
     else (this.body as Phaser.Physics.Arcade.Body).setVelocityX(0);
     if (this.y > 240) this.destroy();
   }

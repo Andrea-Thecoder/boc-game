@@ -120,10 +120,11 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
 - Eventi (`systems/events.ts`) di due tipi: **fatti** al passato (`player:threw`, `enemy:fired`, `boss:damaged`...)
   e **richieste di presentazione** (`fx:*`, `dialogue:say`) che non cambiano mai lo stato del gioco.
 - Sukkini e proiettili nemici sono in pool (`ProjectileSystem`), le scritte volanti in pool (`FxSystem`).
-- L'IA usa campi `phase`/`stateUntil` ad hoc. → da migrare su StateMachine
+- L'IA di tutti i nemici e del boss è una `StateMachine` (campo `brain`), con il diagramma degli stati nel commento
+  della classe. Gli **stati** dicono cosa sta facendo il nemico; le **ricariche** degli attacchi (`nextThrow`,
+  `nextVolley`...) sono timer assoluti separati, perché devono scorrere anche mentre il nemico è in un altro stato.
 - Contenuti già in JSON validati (armi, Paolone, nemici, boss, oggetti, livello 1, dialoghi). Il livello si scrive
   ancora a mano in JSON: passerà a Tiled nella fase 3.
-- `core/StateMachine` è pronta ma l'IA non la usa ancora (passo 6).
 - Grafica e audio sono interamente procedurali (`art/`, `audio/`). Restano come segnaposto finché non arriva la pixel art vera.
 
 ## Roadmap
@@ -138,7 +139,7 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
   - [x] Passo 3: contenuti in JSON validati con zod (armi, Paolone, nemici, proiettili, boss, oggetti, livello 1, dialoghi)
   - [x] Passo 4: `GameScene` spezzata nei sistemi, `GameEvents` tipizzati, regole pure in `systems/rules/`
   - [x] Passo 5: entità sull'EventBus (niente più `GameScene` nelle entità), proiettili e popup in pool
-  - [ ] Passo 6: IA dei nemici e del boss su StateMachine
+  - [x] Passo 6: IA dei nemici e del boss su StateMachine
   - [ ] Passo 7: Telemetry locale, `CLAUDE.md` e ADR
 - [ ] **Fase 3, pipeline contenuti**: livello 1 in Tiled, poi spritesheet Aseprite
 - [ ] **Fase 4, audio**: musiche dell'utente riarrangiate in chiptune (2 pulse + triangle + noise)
