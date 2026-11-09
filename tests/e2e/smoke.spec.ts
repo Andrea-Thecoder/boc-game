@@ -25,11 +25,11 @@ test.describe('smoke', () => {
     expect(state.scenes).toEqual(expect.arrayContaining(['game', 'hud']));
   });
 
-  test('firstWave_playerAdvancesThrowing_scoreIncreases', async ({ game, page }) => {
+  test('firstWave_playerAdvancesThrowing_scoreIncreases', async ({ game }) => {
     // Arrange
     await game.startGame();
-    await page.keyboard.down('ArrowRight');
-    await page.keyboard.down('x');
+    await game.press('right');
+    await game.press('fire');
 
     // Act
     const state = await game.runUntil((s) => s.score > 0, 900);
@@ -76,7 +76,7 @@ test.describe('smoke', () => {
     await game.step(90); // the "PREMI INVIO" prompt appears after 1.2 s
 
     // Act
-    await game.tap('Enter');
+    await game.tap('confirm');
     const state = await game.runUntil((s) => s.scenes.includes('game'), 120);
 
     // Assert

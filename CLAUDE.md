@@ -46,6 +46,9 @@ Flusso di lavoro: branch dedicato → pull request verso `main` → CI verde →
   l'API `window.__boc` definita in `src/debug/testHooks.ts` (`BocTestApi`, `TestState`).
 - L'API è un **contratto stabile**: il refactor deve mantenerla funzionante adattando `testHooks.ts`,
   **non** modificando i test. Se un test va cambiato, chiedere prima all'utente.
+- I test premono **azioni**, mai tasti: `game.tap('confirm')`, `game.press('fire')`. Il driver legge il tasto da
+  `content/data/controls.json` (`keyFor()`), quindi cambiare i tasti non rompe i test. Gli unit test non devono
+  dipendere dai valori dei JSON di contenuto: ogni test imposta da sé i dati che verifica.
 - Il clock è deterministico: `freeze()` ferma il loop reale, simula `Date.now()` e rende `Math.random` riproducibile;
   il tempo avanza solo con `step(frames)`.
 - Gli hook che servono solo ai test vivono in `GameScene` come metodi `debug*` e si chiamano solo da `testHooks.ts`.

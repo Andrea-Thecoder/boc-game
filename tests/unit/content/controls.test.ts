@@ -19,8 +19,8 @@ describe('controlsSchema', () => {
   });
 
   it('controlsSchema_sameKeyForTwoGameActions_isRejectedNamingKeyAndActions', () => {
-    // Arrange: X both throws and jumps
-    const controls = withKeys({ jump: ['X'] });
+    // Arrange: X both throws and jumps (both set here, so the test does not depend on the real bindings)
+    const controls = withKeys({ jump: ['X'], fire: ['X'] });
 
     // Act
     const result = controlsSchema.safeParse(controls);
@@ -31,7 +31,7 @@ describe('controlsSchema', () => {
 
   it('controlsSchema_menuReusesAGameKey_isAccepted', () => {
     // Arrange: Z jumps in game and confirms in menus (different groups)
-    const controls = withKeys({ confirm: ['Z'] });
+    const controls = withKeys({ jump: ['Z'], confirm: ['Z'] });
 
     // Act
     const result = controlsSchema.safeParse(controls);

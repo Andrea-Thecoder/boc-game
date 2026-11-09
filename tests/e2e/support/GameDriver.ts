@@ -1,5 +1,34 @@
 import type { Page } from '@playwright/test';
+import controls from '../../../src/content/data/controls.json' with { type: 'json' };
+import type { InputAction } from '../../../src/content/schemas';
 import type { TestState } from '../../../src/debug/testHooks';
+
+const DIGITS = ['ZERO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'];
+const SPECIAL_KEYS: Record<string, string> = {
+  LEFT: 'ArrowLeft',
+  RIGHT: 'ArrowRight',
+  UP: 'ArrowUp',
+  DOWN: 'ArrowDown',
+  SPACE: 'Space',
+  ENTER: 'Enter',
+  ESC: 'Escape',
+  BACKSPACE: 'Backspace',
+  TAB: 'Tab',
+  SHIFT: 'Shift',
+  CTRL: 'Control',
+  ALT: 'Alt',
+};
+
+/**
+ * The Playwright key for an action: the first key bound to it in src/content/data/controls.json.
+ * Tests press actions ("fire"), never keys ("x"), so changing the bindings never breaks them.
+ */
+export function keyFor(action: InputAction): string {
+  const name = controls.keyboard[action][0];
+  const digit = DIGITS.indexOf(name);
+  if (digit >= 0) return `Digit${digit}`;
+  return SPECIAL_KEYS[name] ?? `Key${name}`;
+}
 
 /** Frames to wait for the boss intro dialogue before he starts fighting. */
 const BOSS_INTRO_FRAMES = 420;
@@ -25,16 +54,25 @@ export class GameDriver {
     return this.page.evaluate(() => window.__boc!.state());
   }
 
-  /** Holds a key for N frames, as a real player would. */
-  async hold(key: string, frames: number): Promise<TestState> {
-    await this.page.keyboard.down(key);
+  /** Holds the key of an action for N frames, as a real player would. */
+  async hold(action: InputAction, frames: number): Promise<TestState> {
+    await this.press(action);
     await this.step(frames);
-    await this.page.keyboard.up(key);
+    await this.release(action);
     return this.step(1);
   }
 
-  tap(key: string): Promise<TestState> {
-    return this.hold(key, 2);
+  tap(action: InputAction): Promise<TestState> {
+    return this.hold(action, 2);
+  }
+
+  /** Keeps the key of an action down until `release()`. */
+  press(action: InputAction): Promise<void> {
+    return this.page.keyboard.down(keyFor(action));
+  }
+
+  release(action: InputAction): Promise<void> {
+    return this.page.keyboard.up(keyFor(action));
   }
 
   /** Advances in chunks until the predicate holds or the frame budget runs out. */
@@ -46,14 +84,17 @@ export class GameDriver {
 
   /** The first key press turns the audio on and shows the main menu. */
   async unlockAudio(): Promise<TestState> {
-    await this.tap('a');
+    // any key works: F2 can never be bound in controls.json, so it does nothing else
+    await this.page.keyboard.down('F2');
+    await this.step(2);
+    await this.page.keyboard.up('F2');
     return this.step(30);
   }
 
   /** From the title screen into level 1 (NEW GAME is the item selected by default). */
   async startGame(): Promise<TestState> {
     await this.unlockAudio();
-    await this.tap('Enter');
+    await this.tap('confirm');
     return this.runUntil((s) => s.scenes.includes('game'), 120);
   }
 
@@ -64,9 +105,9 @@ export class GameDriver {
       window.__boc!.godMode();
       window.__boc!.skipToBossArena();
     });
-    await this.page.keyboard.down('ArrowRight');
+    await this.press('right');
     const s = await this.runUntil((st) => st.bossHp >= 0, 600);
-    await this.page.keyboard.up('ArrowRight');
+    await this.release('right');
     return s;
   }
 
@@ -74,17 +115,17 @@ export class GameDriver {
   async defeatBoss(): Promise<TestState> {
     await this.enterBossArena();
     await this.step(BOSS_INTRO_FRAMES);
-    await this.page.keyboard.down('x');
+    await this.press('fire');
     const s = await this.runUntil((st) => st.scenes.includes('victory'), 12000, 60);
-    await this.page.keyboard.up('x');
+    await this.release('fire');
     return s;
   }
 
   /** Main menu → OPTIONS (one step down: the locked LOAD GAME is skipped). */
   async openOptions(): Promise<TestState> {
     await this.unlockAudio();
-    await this.tap('ArrowDown');
-    await this.tap('Enter');
+    await this.tap('menuDown');
+    await this.tap('confirm');
     return this.runUntil((s) => s.scenes.includes('options'), 30, 5);
   }
 

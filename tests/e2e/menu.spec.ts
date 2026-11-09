@@ -19,7 +19,7 @@ test.describe('menu', () => {
     await game.openOptions();
 
     // Act
-    await game.tap('Escape');
+    await game.tap('back');
     const state = await game.step(5);
 
     // Assert
@@ -31,7 +31,7 @@ test.describe('menu', () => {
     await game.openOptions();
 
     // Act
-    await game.tap('ArrowLeft');
+    await game.tap('menuLeft');
 
     // Assert
     expect(await game.savedSettings()).toMatchObject({ musicVolume: 9 });
@@ -40,15 +40,15 @@ test.describe('menu', () => {
   test('options_controlsOpenedAndClosed_noConsoleErrors', async ({ game, consoleErrors }) => {
     // Arrange: options open, cursor moved to CONTROLS (music, sfx, fullscreen, controls)
     await game.openOptions();
-    await game.tap('ArrowDown');
-    await game.tap('ArrowDown');
-    await game.tap('ArrowDown');
+    await game.tap('menuDown');
+    await game.tap('menuDown');
+    await game.tap('menuDown');
 
     // Act
-    await game.tap('Enter');
+    await game.tap('confirm');
     await game.step(5);
-    await game.tap('Escape');
-    await game.tap('Escape');
+    await game.tap('back');
+    await game.tap('back');
     await game.step(5);
 
     // Assert
