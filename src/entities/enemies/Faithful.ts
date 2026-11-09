@@ -26,6 +26,7 @@ type ChierichettoState = 'move' | 'throw';
 
 /** Keeps his distance and lobs consecrated wafers. */
 export class Chierichetto extends Enemy {
+  readonly kind = 'chierichetto';
   protected readonly deadFrame = 3;
   protected readonly score = CHIERICHETTO.score;
   /** absolute time of the next possible throw (cooldown) */
@@ -103,6 +104,7 @@ type BeghinaState = 'walk' | 'windup' | 'whip';
 
 /** Slow, stubborn, whips you with her rosary after a clear wind-up. */
 export class Beghina extends Enemy {
+  readonly kind = 'beghina';
   protected readonly deadFrame = 4;
   protected readonly score = BEGHINA.score;
   private readonly brain: StateMachine<BeghinaState, Beghina>;
@@ -179,6 +181,7 @@ type SacrestanoState = 'stalk' | 'incense';
 
 /** Swings the thurible and releases clouds of toxic incense that drift towards Paolone. */
 export class Sacrestano extends Enemy {
+  readonly kind = 'sacrestano';
   protected readonly deadFrame = 2;
   protected readonly score = SACRESTANO.score;
   /** absolute time of the next possible puff (cooldown) */

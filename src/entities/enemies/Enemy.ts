@@ -1,13 +1,18 @@
 import Phaser from 'phaser';
 import { sfx } from '../../audio/sfx';
+import type { EnemyType } from '../../content';
 import type { GameBus } from '../../systems/events';
 import type { Player } from '../Player';
+
+export type EnemyKind = EnemyType | 'monsignor-panza';
 
 /** Base class for every faithful of Monsignor Panza. */
 export abstract class Enemy extends Phaser.Physics.Arcade.Sprite {
   hp: number;
   dead = false;
   facing = -1;
+  /** what kind of enemy this is (telemetry, future bestiary) */
+  abstract readonly kind: EnemyKind;
   protected abstract readonly deadFrame: number;
   protected abstract readonly score: number;
   /** What the enemy shouts while flying away (from content/dialoghi/<enemy>.json). */

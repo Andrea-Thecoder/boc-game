@@ -18,6 +18,8 @@ import { ProjectileSystem } from '../systems/ProjectileSystem';
 import { RunSystem } from '../systems/RunSystem';
 import { ScoreSystem } from '../systems/ScoreSystem';
 import { SpawnSystem } from '../systems/SpawnSystem';
+import { LocalStorageSink, browserStorage } from '../systems/telemetry/sinks';
+import { TelemetrySystem } from '../systems/telemetry/TelemetrySystem';
 import { Controls } from '../ui/Controls';
 
 const LEVEL = CONTENT.levels.level1;
@@ -33,6 +35,7 @@ interface Systems {
   projectiles: ProjectileSystem;
   combat: CombatSystem;
   bossArena: BossArenaSystem;
+  telemetry: TelemetrySystem;
   run: RunSystem;
 }
 
@@ -87,6 +90,13 @@ export default class GameScene extends Phaser.Scene {
       camera: new CameraSystem(ctx, level.parallax),
       combat: new CombatSystem(ctx, fx, pickups),
       bossArena: new BossArenaSystem(ctx, { dialogue, pickups, spawn }, LEVEL.boss.nonnaDrop),
+      // before RunSystem: it must see boss:defeated before run:over
+      telemetry: new TelemetrySystem(this.bus, new LocalStorageSink(browserStorage()), {
+        level: 'level1',
+        gameVersion: __APP_VERSION__,
+        now: () => Date.now(),
+        score: () => score.total,
+      }),
       run: new RunSystem(ctx, dialogue, score, LEVEL.name),
     };
     this.wireEvents();

@@ -107,9 +107,11 @@ docs/         gdd/, adr/ (decisioni architetturali), roadmap
 
 ---
 
-## Stato attuale (prototipo v0.1)
+## Stato attuale (v0.1, architettura della fase 2 completata)
 
-Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over. **Non segue ancora l'architettura target**:
+Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over. Il codice **segue l'architettura target**;
+le decisioni e il loro perché sono negli ADR (`docs/adr/`). Un ADR non si riscrive: se una decisione cambia se ne
+scrive uno nuovo che sostituisce il vecchio.
 
 - `scenes/GameScene.ts` fa solo orchestrazione: costruisce il livello, crea i sistemi di `src/systems/`, collega eventi
   e musica. La logica sta nei sistemi (Camera, Fx, Dialogue, Spawn, Pickup, Combat, Score, BossArena, Run), le regole
@@ -123,24 +125,31 @@ Funziona tutto il ciclo: titolo → livello 1 → boss → vittoria / game over.
 - L'IA di tutti i nemici e del boss è una `StateMachine` (campo `brain`), con il diagramma degli stati nel commento
   della classe. Gli **stati** dicono cosa sta facendo il nemico; le **ricariche** degli attacchi (`nextThrow`,
   `nextVolley`...) sono timer assoluti separati, perché devono scorrere anche mentre il nemico è in un altro stato.
-- Contenuti già in JSON validati (armi, Paolone, nemici, boss, oggetti, livello 1, dialoghi). Il livello si scrive
+- Contenuti in JSON validati (armi, Paolone, nemici, boss, oggetti, livello 1, dialoghi). Il livello si scrive
   ancora a mano in JSON: passerà a Tiled nella fase 3.
+- Telemetria (`systems/telemetry/`): `TelemetrySystem` ascolta gli eventi e a fine partita produce un `RunSummary`
+  anonimo (solo statistiche di gioco, versionato con `schemaVersion`), che `LocalStorageSink` salva nel browser
+  (chiave `boc.runs`, ultime 50 partite). Il gioco conosce solo l'interfaccia `TelemetrySink`: nella fase 6 si aggiunge
+  un `HttpSink`. La telemetria **non deve mai far fallire il gioco**. `TelemetrySystem` va creato **prima** di
+  `RunSystem` (deve registrare `boss:defeated` prima di `run:over`). Se cambia la forma del riepilogo, incrementare
+  `RUN_SUMMARY_SCHEMA_VERSION`.
+- La versione del gioco (`package.json`) è iniettata da Vite come `__APP_VERSION__`.
 - Grafica e audio sono interamente procedurali (`art/`, `audio/`). Restano come segnaposto finché non arriva la pixel art vera.
 
 ## Roadmap
 
 - [x] **Fase 1a, strumenti**: Prettier, ESLint, CI GitHub Actions su `main`
 - [x] **Fase 1b, rete di sicurezza**: smoke test e2e con Playwright (avvio → livello → boss → vittoria / game over → riprova, zero errori in console), in CI
-- [ ] **Fase 2, refactor architettura** (branch `refactor/fase-2`). Il gameplay deve restare identico.
+- [x] **Fase 2, refactor architettura** (branch `refactor/fase-2`). Il gameplay è rimasto identico.
   Gli unit test (Vitest) si scrivono **insieme ai nuovi moduli**, non sul codice vecchio che verrà spostato.
   Dopo ogni passo devono passare `npm run check` e lo smoke test e2e.
   - [x] Passo 1: Vitest in CI, test di `kappa()` / `clean()` / `pick()`
-  - [x] Passo 2: `core/EventBus`, `core/StateMachine`, `core/Pool` con unit test (pronti, **non ancora usati dal gioco**)
+  - [x] Passo 2: `core/EventBus`, `core/StateMachine`, `core/Pool` con unit test
   - [x] Passo 3: contenuti in JSON validati con zod (armi, Paolone, nemici, proiettili, boss, oggetti, livello 1, dialoghi)
   - [x] Passo 4: `GameScene` spezzata nei sistemi, `GameEvents` tipizzati, regole pure in `systems/rules/`
   - [x] Passo 5: entità sull'EventBus (niente più `GameScene` nelle entità), proiettili e popup in pool
   - [x] Passo 6: IA dei nemici e del boss su StateMachine
-  - [ ] Passo 7: Telemetry locale, `CLAUDE.md` e ADR
+  - [x] Passo 7: telemetria locale, `CLAUDE.md` e ADR (`docs/adr/0001`-`0006`)
 - [ ] **Fase 3, pipeline contenuti**: livello 1 in Tiled, poi spritesheet Aseprite
 - [ ] **Fase 4, audio**: musiche dell'utente riarrangiate in chiptune (2 pulse + triangle + noise)
 - [ ] **Fase 5, deploy**: build pubblica (itch.io o GitHub Pages)

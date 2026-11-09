@@ -46,6 +46,7 @@ const COMBAT_STATES: ReadonlySet<PanzaState> = new Set(['fighting', 'telegraph',
  * Three phases: holy water barrage → summons altar boys → bells from the sky and ramming charges.
  */
 export class MonsignorPanza extends Enemy {
+  readonly kind = 'monsignor-panza';
   protected readonly deadFrame = 2;
   protected readonly score = BOSS.score;
   readonly maxHp = BOSS.hp;
