@@ -18,9 +18,11 @@ import { ProjectileSystem } from '../systems/ProjectileSystem';
 import { RunSystem } from '../systems/RunSystem';
 import { ScoreSystem } from '../systems/ScoreSystem';
 import { SpawnSystem } from '../systems/SpawnSystem';
-import { LocalStorageSink, browserStorage } from '../systems/telemetry/sinks';
+import { browserStorage } from '../core/storage';
+import { LocalStorageSink } from '../systems/telemetry/sinks';
 import { TelemetrySystem } from '../systems/telemetry/TelemetrySystem';
 import { Controls } from '../ui/Controls';
+import { onActionKey } from '../ui/keys';
 
 const LEVEL = CONTENT.levels.level1;
 
@@ -101,7 +103,7 @@ export default class GameScene extends Phaser.Scene {
     };
     this.wireEvents();
 
-    this.input.keyboard!.on('keydown-M', () => audio.toggleMute());
+    onActionKey(this, 'mute', () => audio.toggleMute());
     this.scene.launch('hud');
     this.bus.emit('hud:changed');
     music.play('level');

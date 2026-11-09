@@ -2,6 +2,10 @@
  * Tiny Web Audio engine: everything (gothic organ, gregorian choir, bells, sfx) is synthesized,
  * no audio files are shipped. Must be unlocked by a user gesture (title screen key press).
  */
+/** Mix levels of the music and effects buses at full player volume. */
+const MUSIC_MIX = 0.42;
+const SFX_MIX = 0.55;
+
 export class AudioEngine {
   ctx: AudioContext | null = null;
   master!: GainNode;
@@ -11,6 +15,9 @@ export class AudioEngine {
   reverbSend!: GainNode;
   private noiseBuf!: AudioBuffer;
   muted = false;
+  /** player volume for music and effects, 0..1 (options menu); multiplies the mix levels below */
+  private musicLevel = 1;
+  private sfxLevel = 1;
 
   unlock() {
     if (this.ctx) {
@@ -33,17 +40,26 @@ export class AudioEngine {
     this.reverbSend.connect(this.reverb).connect(this.master);
 
     this.music = ctx.createGain();
-    this.music.gain.value = 0.42;
+    this.music.gain.value = MUSIC_MIX * this.musicLevel;
     this.music.connect(this.master);
     this.music.connect(this.reverbSend);
 
     this.sfx = ctx.createGain();
-    this.sfx.gain.value = 0.55;
+    this.sfx.gain.value = SFX_MIX * this.sfxLevel;
     this.sfx.connect(this.master);
 
     this.noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = this.noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+
+  /** Sets the player volumes (0..1). Can be called before unlock: they apply when audio starts. */
+  setVolumes(music: number, sfx: number) {
+    this.musicLevel = music;
+    this.sfxLevel = sfx;
+    if (!this.ctx) return;
+    this.music.gain.setTargetAtTime(MUSIC_MIX * music, this.ctx.currentTime, 0.03);
+    this.sfx.gain.setTargetAtTime(SFX_MIX * sfx, this.ctx.currentTime, 0.03);
   }
 
   toggleMute() {

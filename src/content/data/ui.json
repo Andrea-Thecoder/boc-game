@@ -1,0 +1,27 @@
+{
+  "title": {
+    "series": "THE MONSIGNOR CHRONICLES",
+    "battleFor": "BATTLE FOR",
+    "place": "CHIAPPETONS",
+    "pressAnyKey": "PRESS ANY KEY"
+  },
+  "mainMenu": {
+    "newGame": "NEW GAME",
+    "loadGame": "LOAD GAME",
+    "options": "OPTIONS"
+  },
+  "options": {
+    "title": "OPTIONS",
+    "musicVolume": "MUSIC VOLUME",
+    "sfxVolume": "SFX VOLUME",
+    "fullscreen": "FULLSCREEN",
+    "on": "ON",
+    "off": "OFF",
+    "controls": "CONTROLS",
+    "language": "LANGUAGE",
+    "back": "BACK"
+  },
+  "languages": {
+    "it": "ITALIANO"
+  }
+}

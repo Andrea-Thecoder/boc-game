@@ -22,7 +22,7 @@ describe('parseContent', () => {
     const act = () => parseContent(weaponSchema, broken, 'weapons.json');
 
     // Assert
-    expect(act).toThrow(/src\/content\/weapons\.json:\n {2}- cooldown: /);
+    expect(act).toThrow(/src\/content\/data\/weapons\.json:\n {2}- cooldown: /);
   });
 
   it('parseContent_validData_returnsIt', () => {

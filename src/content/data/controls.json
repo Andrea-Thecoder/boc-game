@@ -1,0 +1,27 @@
+{
+  "keyboard": {
+    "left": ["LEFT", "A"],
+    "right": ["RIGHT", "D"],
+    "up": ["UP", "W"],
+    "down": ["DOWN", "S"],
+    "jump": ["Z", "SPACE", "K"],
+    "fire": ["E", "J"],
+    "panza": ["Q", "L"],
+    "pause": ["P", "ESC"],
+    "mute": ["M"],
+    "menuUp": ["UP", "W"],
+    "menuDown": ["DOWN", "S"],
+    "menuLeft": ["LEFT", "A"],
+    "menuRight": ["RIGHT", "D"],
+    "confirm": ["ENTER", "SPACE", "Z", "X"],
+    "back": ["ESC", "BACKSPACE"]
+  },
+  "table": [
+    { "label": "MOVE", "actions": ["left", "right"] },
+    { "label": "JUMP", "actions": ["jump"] },
+    { "label": "THROW", "actions": ["fire"] },
+    { "label": "PANZATA", "actions": ["panza"] },
+    { "label": "PAUSE", "actions": ["pause"] },
+    { "label": "MUTE", "actions": ["mute"] }
+  ]
+}

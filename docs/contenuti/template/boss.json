@@ -1,0 +1,53 @@
+{
+  "hp": 110,
+  "score": 5000,
+  "entrySpeed": 70,
+  "phases": [
+    {
+      "hpRatio": 1,
+      "speed": 35,
+      "volleyEveryMs": 1500,
+      "volleyCount": 3,
+      "summons": false,
+      "bells": false,
+      "charges": false
+    },
+    {
+      "hpRatio": 0.5,
+      "speed": 60,
+      "volleyEveryMs": 1100,
+      "volleyCount": 5,
+      "summons": true,
+      "bells": true,
+      "charges": true,
+      "line": "fase_2"
+    }
+  ],
+  "firstAttackMs": {
+    "volley": 800,
+    "summon": 4000,
+    "bells": 2500,
+    "charge": 5000
+  },
+  "volley": {
+    "spacing": 18,
+    "flightTime": 0.55,
+    "flightTimeStep": 0.16
+  },
+  "summon": {
+    "everyMs": 5500,
+    "maxAlive": 3
+  },
+  "bells": {
+    "everyMs": 3400,
+    "offsets": [-44, 0, 44],
+    "staggerMs": 160
+  },
+  "charge": {
+    "everyMs": 7000,
+    "telegraphMs": 800,
+    "speed": 270,
+    "returnSpeed": 110,
+    "pauseMs": 500
+  }
+}

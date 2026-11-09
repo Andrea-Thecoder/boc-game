@@ -1,0 +1,12 @@
+{
+  "hp": 4,
+  "score": 200,
+  "walkSpeed": 22,
+  "keepDistance": 120,
+  "attack": {
+    "firstDelayMs": 1200,
+    "cooldownMs": [2600, 3400],
+    "range": 240,
+    "smokeSpeed": 42
+  }
+}

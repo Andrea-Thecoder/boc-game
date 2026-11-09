@@ -13,7 +13,7 @@ import {
 /**
  * Validates one content file and returns its typed data.
  * On failure throws an error naming the file and every wrong field, e.g.
- * `Contenuto non valido in src/content/weapons.json: - pera.cooldown: Too small: expected number to be >0`.
+ * `Contenuto non valido in src/content/data/weapons.json: - pera.cooldown: Too small: expected number to be >0`.
  */
 export function parseContent<S extends z.ZodType>(schema: S, data: unknown, file: string): z.infer<S> {
   const result = schema.safeParse(data);
@@ -21,7 +21,7 @@ export function parseContent<S extends z.ZodType>(schema: S, data: unknown, file
   const details = result.error.issues
     .map((i) => `  - ${i.path.length ? i.path.join('.') : '(radice)'}: ${i.message}`)
     .join('\n');
-  throw new Error(`Contenuto non valido in src/content/${file}:\n${details}`);
+  throw new Error(`Contenuto non valido in src/content/data/${file}:\n${details}`);
 }
 
 /** The parts of the content that reference each other. */

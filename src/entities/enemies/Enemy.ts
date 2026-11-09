@@ -15,7 +15,7 @@ export abstract class Enemy extends Phaser.Physics.Arcade.Sprite {
   abstract readonly kind: EnemyKind;
   protected abstract readonly deadFrame: number;
   protected abstract readonly score: number;
-  /** What the enemy shouts while flying away (from content/dialoghi/<enemy>.json). */
+  /** What the enemy shouts while flying away (from content/data/dialoghi/<enemy>.json). */
   protected abstract deathScream(): string;
 
   /**

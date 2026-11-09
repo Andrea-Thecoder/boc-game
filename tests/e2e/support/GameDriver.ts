@@ -44,10 +44,15 @@ export class GameDriver {
     return s;
   }
 
-  /** From the title screen into level 1. */
+  /** The first key press turns the audio on and shows the main menu. */
+  async unlockAudio(): Promise<TestState> {
+    await this.tap('a');
+    return this.step(30);
+  }
+
+  /** From the title screen into level 1 (NEW GAME is the item selected by default). */
   async startGame(): Promise<TestState> {
-    await this.tap('a'); // first key unlocks audio
-    await this.step(30);
+    await this.unlockAudio();
     await this.tap('Enter');
     return this.runUntil((s) => s.scenes.includes('game'), 120);
   }
@@ -73,6 +78,22 @@ export class GameDriver {
     const s = await this.runUntil((st) => st.scenes.includes('victory'), 12000, 60);
     await this.page.keyboard.up('x');
     return s;
+  }
+
+  /** Main menu → OPTIONS (one step down: the locked LOAD GAME is skipped). */
+  async openOptions(): Promise<TestState> {
+    await this.unlockAudio();
+    await this.tap('ArrowDown');
+    await this.tap('Enter');
+    return this.runUntil((s) => s.scenes.includes('options'), 30, 5);
+  }
+
+  /** Settings saved in this browser by the options menu (null if never saved). */
+  savedSettings(): Promise<unknown> {
+    return this.page.evaluate(() => {
+      const raw = localStorage.getItem('boc.settings');
+      return raw ? (JSON.parse(raw) as unknown) : null;
+    });
   }
 
   async killPlayer(): Promise<TestState> {

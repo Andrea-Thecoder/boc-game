@@ -1,0 +1,40 @@
+{
+  "name": "PIAZZA DEL MUNICIPIO, CHIAPPETONS",
+  "props": [
+    { "kind": "cartello", "x": 90, "label": "MUNICIPIO" },
+    { "kind": "lampione", "x": 200 },
+    { "kind": "cassetta", "x": 380 },
+    { "kind": "cassetta", "x": 398 },
+    { "kind": "cassetta", "x": 389, "y": 148 },
+    { "kind": "balcone", "x": 560, "y": 120 },
+    { "kind": "fontana", "x": 800 }
+  ],
+  "pickups": [
+    { "kind": "pera", "x": 389, "y": 128 },
+    { "kind": "panzerotto", "x": 560, "y": 102 }
+  ],
+  "waves": [
+    {
+      "trigger": 170,
+      "line": "ondata_chierichetti",
+      "spawns": [
+        { "type": "chierichetto", "at": "right" },
+        { "type": "chierichetto", "at": "right", "delay": 700 }
+      ]
+    },
+    {
+      "trigger": 600,
+      "spawns": [
+        { "type": "beghina", "at": "right" },
+        { "type": "sacrestano", "at": 760, "y": 112, "delay": 1200 }
+      ]
+    }
+  ],
+  "boss": {
+    "nonnaDrop": {
+      "firstAfterMs": 12000,
+      "everyMs": 14000,
+      "kinds": ["ace", "pera", "panzerotto"]
+    }
+  }
+}

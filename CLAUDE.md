@@ -1,6 +1,6 @@
-# BOC Game: "Paolone contro Monsignor Panza"
+# BOC Game: "The Monsignor Chronicles: Battle for Chiappetons"
 
-Run-and-gun 2D a scorrimento laterale in pixel art, tono comico. Ambientazione: **Chiappetons**, paesino del Sud Italia.
+Run-and-gun 2D a scorrimento laterale in pixel art, tono comico. Protagonista Paolone, cattivo Monsignor Panza. Ambientazione: **Chiappetons**, paesino del Sud Italia.
 Stack: **Phaser 3 + TypeScript (strict) + Vite**. Risoluzione interna 320x180, scalata.
 
 Questo file è il riferimento per gli agenti: descrive **come il progetto DEVE funzionare** (architettura target),
@@ -52,8 +52,10 @@ Flusso di lavoro: branch dedicato → pull request verso `main` → CI verde →
 
 ### Contenuti di gioco (`src/content/`)
 
+- I JSON stanno tutti in `src/content/data/`; in `src/content/` restano solo i `.ts` (schemi, validazione, accesso).
 - **Numeri di bilanciamento e testi stanno nei JSON**, mai nel codice:
-  `weapons.json`, `player.json`, `enemies.json`, `projectiles.json`, `boss-panza.json`, `props.json` (catalogo degli
+  `weapons.json`, `player.json`, `enemies.json`, `projectiles.json`, `boss-panza.json`, `ui.json` (titolo, menu,
+  opzioni: solo caratteri del font pixel, validati), `controls.json` (tasti), `props.json` (catalogo degli
   oggetti di scena), `levels/<livello>.json` (oggetti, pickup, ondate, drop delle nonne), `dialoghi/<personaggio>.json`.
 - **Nel codice resta solo la geometria legata agli sprite** (offset delle mani, hitbox, punti di lancio, posizioni
   nell'arena del boss): cambia con la pixel art, non con il bilanciamento.
@@ -64,7 +66,10 @@ Flusso di lavoro: branch dedicato → pull request verso `main` → CI verde →
   `line()` controlla l'id **a compile time** (le chiavi vengono dal JSON); per gli id che arrivano dai dati si usa
   `lineById()`, validato all'avvio. Una battuta con più varianti (array) ne restituisce una a caso.
 - Le battute di Paolone si scrivono in italiano normale: le K le aggiunge `kappa()` quando vengono mostrate.
-- Aggiungere un campo: schema in `schemas.ts` → valore nel JSON → uso nel codice → test in `tests/unit/content/`.
+- Aggiungere un campo: schema in `schemas.ts` → valore nel JSON → uso nel codice → test in `tests/unit/content/`
+  → aggiornare template e guida in `docs/contenuti/` (`templates.test.ts` valida i template contro gli schemi).
+- `docs/contenuti/README.md` è la guida per l'utente (campi, unità, ricette); `docs/contenuti/template/` ha un JSON
+  di esempio per ogni tipo di contenuto. Il gioco non li carica.
 - `content/`, `core/` e `ui/text.ts` sono moduli puri (niente Phaser): si testano con Vitest.
 
 ---
@@ -98,7 +103,7 @@ docs/         gdd/, adr/ (decisioni architetturali), roadmap
    Niente `if` sparsi su timer multipli.
 4. **Data-driven.** Statistiche di armi e nemici, ondate, dialoghi e livelli stanno in dati (JSON / Tiled), non nel codice.
    Il codice definisce i *comportamenti*, i dati i *numeri*. Il bilanciamento non deve richiedere modifiche alla logica.
-5. **Dialoghi in file di contenuto** (`content/dialoghi/<personaggio>.json`). La parlata con le K di Paolone è una
+5. **Dialoghi in file di contenuto** (`content/data/dialoghi/<personaggio>.json`). La parlata con le K di Paolone è una
    trasformazione automatica (`kappa()`), non va mai scritta a mano nei testi.
 6. **Pooling** per proiettili, particelle e popup: niente `new` per ogni sukkino in un loop di gioco.
 7. **Telemetria dietro un'interfaccia** (`systems/Telemetry`): oggi salva in locale, domani invia al backend.
@@ -134,6 +139,19 @@ scrive uno nuovo che sostituisce il vecchio.
   `RunSystem` (deve registrare `boss:defeated` prima di `run:over`). Se cambia la forma del riepilogo, incrementare
   `RUN_SUMMARY_SCHEMA_VERSION`.
 - La versione del gioco (`package.json`) è iniettata da Vite come `__APP_VERSION__`.
+- Titolo e menu (ADR 0007): il primo tasto attiva l'audio e mostra il menu (NEW GAME, LOAD GAME bloccato fino al
+  backend, OPTIONS). Le voci sono in inglese per scelta dell'utente, il resto del gioco in italiano.
+  `ui/Menu` è il componente riusabile (tastiera, mouse, gamepad; il cursore salta le voci bloccate, regole pure in
+  `ui/menuNav.ts`). `OptionsScene` è un overlay lanciato sopra la scena che lo apre: volumi, schermo intero, comandi,
+  lingua (solo italiano, bloccata). Le impostazioni stanno in `core/Settings` (`SettingsStore`, chiave `boc.settings`,
+  ogni campo con il suo fallback) e si applicano con `applySettings()` di `src/settings.ts`. Come la telemetria,
+  il salvataggio delle impostazioni **non deve mai far fallire il gioco**.
+- **Tasti**: si decidono **solo** in `content/data/controls.json` (azione → tasti, nomi di
+  `Phaser.Input.Keyboard.KeyCodes`). Nel codice non si scrive mai un tasto: `ui/Controls` (gioco), `ui/Menu` (menu),
+  `onActionKey()` di `ui/keys.ts` (muto, schermate finali). Lo schema rifiuta un tasto usato per due azioni dello
+  stesso gruppo (gioco o menu). La tabella CONTROLS delle opzioni è generata dai tasti veri (`ui/controlsTable.ts`).
+  Il gamepad usa il layout standard, definito in `Controls` e `Menu`.
+- Le scene overlay (oggi `OptionsScene`) stanno in fondo alla lista di `main.ts`: Phaser disegna sopra le ultime.
 - Grafica e audio sono interamente procedurali (`art/`, `audio/`). Restano come segnaposto finché non arriva la pixel art vera.
 
 ## Roadmap

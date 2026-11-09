@@ -1,9 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import bossJson from '../../../src/content/boss-panza.json';
-import enemiesJson from '../../../src/content/enemies.json';
-import level1Json from '../../../src/content/levels/level1.json';
-import weaponsJson from '../../../src/content/weapons.json';
-import { bossSchema, dialogueSchema, enemiesSchema, levelSchema, weaponSchema } from '../../../src/content/schemas';
+import bossJson from '../../../src/content/data/boss-panza.json';
+import enemiesJson from '../../../src/content/data/enemies.json';
+import level1Json from '../../../src/content/data/levels/level1.json';
+import uiJson from '../../../src/content/data/ui.json';
+import weaponsJson from '../../../src/content/data/weapons.json';
+import {
+  bossSchema,
+  dialogueSchema,
+  enemiesSchema,
+  levelSchema,
+  uiTextSchema,
+  weaponSchema,
+} from '../../../src/content/schemas';
 
 /** Each test starts from a valid real file and breaks exactly one thing. */
 const clone = <T>(value: T): T => structuredClone(value);
@@ -161,6 +169,34 @@ describe('dialogueSchema', () => {
 
     // Act
     const result = dialogueSchema.safeParse(dialogue);
+
+    // Assert
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('uiTextSchema', () => {
+  it.each([
+    ['lowercase letters', 'New game'],
+    ['accented letters', 'OPZIONI ÀUDIO'],
+    ['an empty label', ''],
+  ])('uiTextSchema_menuLabelWith%s_isRejected', (_case, label) => {
+    // Arrange
+    const ui = { ...uiJson, mainMenu: { ...uiJson.mainMenu, newGame: label } };
+
+    // Act
+    const result = uiTextSchema.safeParse(ui);
+
+    // Assert
+    expect(result.success).toBe(false);
+  });
+
+  it('uiTextSchema_unknownLanguage_isRejected', () => {
+    // Arrange
+    const ui = { ...uiJson, languages: { ...uiJson.languages, xx: 'XX' } };
+
+    // Act
+    const result = uiTextSchema.safeParse(ui);
 
     // Assert
     expect(result.success).toBe(false);

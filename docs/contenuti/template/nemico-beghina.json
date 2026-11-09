@@ -1,0 +1,12 @@
+{
+  "hp": 3,
+  "score": 150,
+  "walkSpeed": 40,
+  "stopDistance": 26,
+  "attack": {
+    "reach": 34,
+    "verticalReach": 26,
+    "windupMs": 380,
+    "whipMs": 260
+  }
+}

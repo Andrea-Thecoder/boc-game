@@ -3,13 +3,21 @@ import { GROUND_Y, H, W } from '../config';
 import { TORSO } from '../art/sprites';
 import { audio } from '../audio/engine';
 import { music } from '../audio/music';
-import { sfx } from '../audio/sfx';
+import { CONTENT, line } from '../content';
 import { Bubble } from '../ui/Bubble';
+import { onActionKey } from '../ui/keys';
+import { Menu } from '../ui/Menu';
+import { panel } from '../ui/panel';
 import { kappa } from '../ui/text';
-import { line } from '../content';
+
+const UI = CONTENT.ui;
+/** y of the first menu row; the panel is drawn around the three rows */
+const MENU_Y = 70;
+const MENU_W = 104;
 
 export default class TitleScene extends Phaser.Scene {
   private prompt!: Phaser.GameObjects.BitmapText;
+  private menu!: Menu;
   private ready = false;
 
   constructor() {
@@ -24,19 +32,28 @@ export default class TitleScene extends Phaser.Scene {
     this.add.tileSprite(0, GROUND_Y, W, H - GROUND_Y, 'ground').setOrigin(0);
     this.tweens.add({ targets: houses, tilePositionX: 512, duration: 60000, repeat: -1 });
 
-    const title = this.add
-      .bitmapText(W / 2, 14, 'pxo', 'PAOLONE', 21)
+    const { title: t } = UI;
+    this.add
+      .bitmapText(W / 2, 7, 'pxo', t.series, 7)
       .setOrigin(0.5, 0)
       .setTint(0xe8b830);
-    this.add.bitmapText(W / 2, 44, 'pxo', 'CONTRO', 7).setOrigin(0.5, 0);
     this.add
-      .bitmapText(W / 2, 55, 'pxo', 'MONSIGNOR PANZA', 14)
+      .bitmapText(W / 2, 19, 'pxo', t.battleFor, 7)
+      .setOrigin(0.5, 0)
+      .setTint(0xd9d2c3);
+    const place = this.add
+      .bitmapText(W / 2, 30, 'pxo', t.place, 21)
       .setOrigin(0.5, 0)
       .setTint(0xe2685a);
-    this.tweens.add({ targets: title, y: 12, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    this.tweens.add({ targets: place, y: 28, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.InOut' });
+    this.add
+      .bitmapText(W - 3, H - 8, 'px', `V${__APP_VERSION__}`, 6)
+      .setOrigin(1, 0)
+      .setTint(0x8a8394)
+      .setDepth(10);
 
     // Paolone, ready to throw
-    const px = 70;
+    const px = 46; // left of the menu panel, so his speech bubble does not cover it
     this.add
       .sprite(px, GROUND_Y + 1, 'paolone-legs', 0)
       .setOrigin(0.5, 1)
@@ -69,47 +86,59 @@ export default class TitleScene extends Phaser.Scene {
       .setFlipX(true)
       .play('beghina-walk');
 
-    this.prompt = this.add.bitmapText(W / 2, 92, 'pxo', '', 7).setOrigin(0.5, 0);
-    this.setPrompt();
+    this.prompt = this.add.bitmapText(W / 2, MENU_Y + 16, 'pxo', t.pressAnyKey, 7).setOrigin(0.5, 0);
     this.tweens.add({ targets: this.prompt, alpha: 0.2, duration: 500, yoyo: true, repeat: -1 });
-    this.add
-      .bitmapText(W / 2, H - 9, 'px', 'FRECCE MUOVI  Z SALTA  X SUKKINO  C PANZATA', 6)
-      .setOrigin(0.5, 0)
-      .setTint(0xd9d2c3)
-      .setDepth(10);
 
     this.time.delayedCall(
       1200,
-      () => new Bubble(this, { x: px + 8, y: GROUND_Y - 4 }, kappa(line('paolone', 'titolo')), 70, 2400),
+      () =>
+        new Bubble(this, { x: px + 8, y: GROUND_Y - 4 }, kappa(line('paolone', 'titolo')), 70, 2400, { maxWidth: 80 }),
     );
 
-    this.input.keyboard!.on('keydown', (e: KeyboardEvent) => this.onKey(e.code));
-    this.input.on('pointerdown', () => this.onKey('Enter'));
-    this.input.gamepad?.on('down', () => this.onKey('Enter'));
-    if (this.ready) music.play('title');
+    onActionKey(this, 'mute', () => audio.toggleMute());
+    if (this.ready) this.showMenu();
+    else {
+      this.input.keyboard!.once('keydown', () => this.unlockAudio());
+      this.input.once('pointerdown', () => this.unlockAudio());
+      this.input.gamepad?.once('down', () => this.unlockAudio());
+    }
   }
 
-  private setPrompt() {
-    this.prompt.setText(this.ready ? 'PREMI INVIO PER INIZIARE' : 'PREMI UN TASTO (ATTIVA AUDIO)');
+  /** Browsers start audio only after a user gesture: the first key press turns it on, then the menu shows. */
+  private unlockAudio() {
+    if (this.ready) return;
+    this.ready = true;
+    audio.unlock();
+    this.showMenu();
   }
 
-  private onKey(code: string) {
-    if (!this.ready) {
-      audio.unlock();
-      this.ready = true;
-      music.play('title');
-      this.setPrompt();
-      return;
-    }
-    if (code === 'KeyM') {
-      audio.toggleMute();
-      return;
-    }
-    if (['Enter', 'Space', 'KeyZ', 'KeyX'].includes(code)) {
-      sfx.select();
-      music.stop();
-      this.cameras.main.fadeOut(300, 0, 0, 0);
-      this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('game'));
-    }
+  private showMenu() {
+    music.play('title');
+    this.prompt.setVisible(false);
+    const { mainMenu } = UI;
+    panel(this, W / 2, MENU_Y + 19, MENU_W, 50);
+    this.menu = new Menu(
+      this,
+      [
+        { label: mainMenu.newGame, onConfirm: () => this.startGame() },
+        // saves arrive with the backend (fase 6)
+        { label: mainMenu.loadGame, enabled: false },
+        { label: mainMenu.options, onConfirm: () => this.openOptions() },
+      ],
+      { x: W / 2, y: MENU_Y, width: MENU_W - 24 },
+    );
+  }
+
+  private startGame() {
+    this.menu.setEnabled(false);
+    music.stop();
+    this.cameras.main.fadeOut(300, 0, 0, 0);
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('game'));
+  }
+
+  private openOptions() {
+    this.menu.setEnabled(false);
+    this.scene.launch('options');
+    this.scene.get('options').events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.menu.setEnabled(true));
   }
 }

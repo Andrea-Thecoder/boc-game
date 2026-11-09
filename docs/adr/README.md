@@ -16,3 +16,4 @@ Regole:
 | [0004](0004-object-pooling.md) | Object pooling per proiettili e scritte volanti | Accettato |
 | [0005](0005-telemetria-locale.md) | Telemetria dietro un'interfaccia, oggi salvata in locale | Accettato |
 | [0006](0006-smoke-test-api-stabile.md) | Smoke test e2e su un'API di test stabile e clock deterministico | Accettato |
+| [0007](0007-menu-e-impostazioni.md) | Menu riusabile, opzioni come overlay, impostazioni salvate nel browser | Accettato |

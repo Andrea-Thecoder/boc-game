@@ -1,4 +1,7 @@
+import type { StorageLike } from '../../core/storage';
 import type { RunSummary } from './RunRecorder';
+
+export type { StorageLike };
 
 /**
  * Where run summaries go. Today: the browser's localStorage. Tomorrow (fase 6): an HttpSink that posts
@@ -7,12 +10,6 @@ import type { RunSummary } from './RunRecorder';
 export interface TelemetrySink {
   /** Must never throw: telemetry can fail, the game must not. */
   record(summary: RunSummary): void;
-}
-
-/** The subset of the Web Storage API we use (makes the sink testable without a browser). */
-export interface StorageLike {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
 }
 
 export const RUNS_STORAGE_KEY = 'boc.runs';
@@ -50,13 +47,4 @@ export class LocalStorageSink implements TelemetrySink {
 /** Discards everything (tests, or storage unavailable). */
 export class NullSink implements TelemetrySink {
   record(): void {}
-}
-
-/** The browser's localStorage, or null where accessing it throws (some privacy modes do). */
-export function browserStorage(): StorageLike | null {
-  try {
-    return globalThis.localStorage ?? null;
-  } catch {
-    return null;
-  }
 }

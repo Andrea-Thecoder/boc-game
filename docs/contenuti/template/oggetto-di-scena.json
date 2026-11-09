@@ -1,0 +1,10 @@
+{
+  "depth": 30,
+  "groundOffset": 1,
+  "platform": {
+    "dx": 0,
+    "dy": -12,
+    "w": 24
+  },
+  "labelDy": -20
+}

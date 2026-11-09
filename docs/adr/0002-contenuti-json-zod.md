@@ -27,3 +27,7 @@ modificare la logica, con il rischio di romperla. Era anche stata valutata l'ide
 - Si bilancia e si aggiungono ondate o battute senza programmare.
 - Un passaggio in più per capire un valore (JSON invece della classe).
 - La fase 3 (livelli disegnati con Tiled) si innesta naturalmente: Tiled produce JSON.
+
+## Note
+- I file JSON sono stati poi spostati in `src/content/data/`, per separarli dal codice (`schemas.ts`, `validate.ts`,
+  `index.ts`). È solo un cambio di cartella: la decisione resta valida.

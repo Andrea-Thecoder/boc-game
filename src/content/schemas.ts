@@ -1,7 +1,8 @@
 import { z } from 'zod';
+import { LANGUAGES } from '../core/Settings';
 
 /**
- * Schemas of every game content file (`src/content/**\/*.json`).
+ * Schemas of every game content file (`src/content/data/**\/*.json`).
  * Pure module (only zod): safe to import from unit tests.
  *
  * Rule of thumb: JSON holds the balancing numbers and texts; geometry tied to the sprites
@@ -270,3 +271,91 @@ export const dialogueSchema = z.record(
   z.union([z.string().min(1), z.array(z.string().min(1)).min(1)]),
 );
 export type DialogueFile = z.infer<typeof dialogueSchema>;
+
+// ---------------------------------------------------------------------------------------------
+// ui.json (title screen, menus, options)
+// ---------------------------------------------------------------------------------------------
+
+/** Text drawn with the pixel font as it is: uppercase letters, digits and basic punctuation only. */
+const pixelText = z
+  .string()
+  .min(1)
+  .regex(
+    /^[A-Z0-9 !'",\-.:?+/()<>~]+$/,
+    'solo caratteri del font pixel: maiuscole senza accenti, cifre, punteggiatura',
+  );
+
+export const uiTextSchema = z.object({
+  title: z.object({ series: pixelText, battleFor: pixelText, place: pixelText, pressAnyKey: pixelText }),
+  mainMenu: z.object({ newGame: pixelText, loadGame: pixelText, options: pixelText }),
+  options: z.object({
+    title: pixelText,
+    musicVolume: pixelText,
+    sfxVolume: pixelText,
+    fullscreen: pixelText,
+    on: pixelText,
+    off: pixelText,
+    controls: pixelText,
+    language: pixelText,
+    back: pixelText,
+  }),
+  /** name of each language, written in that language */
+  languages: z.record(z.enum(LANGUAGES), pixelText),
+});
+export type UiText = z.infer<typeof uiTextSchema>;
+
+// ---------------------------------------------------------------------------------------------
+// controls.json (keyboard bindings: the ONLY place where keys are decided)
+// ---------------------------------------------------------------------------------------------
+
+/** Key names, as Phaser calls them (Phaser.Input.Keyboard.KeyCodes). */
+export const KEY_NAMES = [
+  ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''),
+  ...['ZERO', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE'],
+  ...['LEFT', 'RIGHT', 'UP', 'DOWN', 'SPACE', 'ENTER', 'ESC', 'BACKSPACE', 'TAB', 'SHIFT', 'CTRL', 'ALT'],
+] as const;
+export type KeyName = (typeof KEY_NAMES)[number];
+
+/** Actions while playing: no key may trigger two of them. */
+export const GAME_ACTIONS = ['left', 'right', 'up', 'down', 'jump', 'fire', 'panza', 'pause', 'mute'] as const;
+/** Actions in the menus: no key may trigger two of them (they may reuse the game keys). */
+export const MENU_ACTIONS = ['menuUp', 'menuDown', 'menuLeft', 'menuRight', 'confirm', 'back'] as const;
+export type GameAction = (typeof GAME_ACTIONS)[number];
+export type MenuAction = (typeof MENU_ACTIONS)[number];
+export type InputAction = GameAction | MenuAction;
+
+const keyList = z.array(z.enum(KEY_NAMES)).min(1);
+
+/** Keys bound to more than one action of the same group, e.g. ["X → fire, jump"]. */
+export function duplicateKeys(
+  bindings: Partial<Record<InputAction, readonly string[]>>,
+  group: readonly InputAction[],
+) {
+  const owners = new Map<string, InputAction[]>();
+  for (const action of group) {
+    for (const key of new Set(bindings[action] ?? [])) owners.set(key, [...(owners.get(key) ?? []), action]);
+  }
+  return [...owners]
+    .filter(([, actions]) => actions.length > 1)
+    .map(([key, actions]) => `${key} -> ${actions.join(', ')}`);
+}
+
+export const controlsSchema = z.object({
+  keyboard: z
+    .object(
+      Object.fromEntries([...GAME_ACTIONS, ...MENU_ACTIONS].map((a) => [a, keyList])) as Record<
+        InputAction,
+        typeof keyList
+      >,
+    )
+    .superRefine((bindings, ctx) => {
+      for (const group of [GAME_ACTIONS, MENU_ACTIONS]) {
+        for (const clash of duplicateKeys(bindings, group)) {
+          ctx.addIssue({ code: 'custom', message: `tasto usato per due azioni: ${clash}` });
+        }
+      }
+    }),
+  /** rows of the CONTROLS table in the options: the keys shown are read from `keyboard` */
+  table: z.array(z.object({ label: pixelText, actions: z.array(z.enum(GAME_ACTIONS)).min(1) })).min(1),
+});
+export type ControlsDef = z.infer<typeof controlsSchema>;

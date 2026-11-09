@@ -110,4 +110,16 @@ export const sfx = {
     tone('square', 440, 440, 0.06, 0.15);
     tone('square', 880, 880, 0.08, 0.15, 0.06);
   },
+  /** menu cursor moved */
+  cursor: () => tone('square', 990, 990, 0.03, 0.08),
+  /** locked menu item */
+  denied: () => {
+    tone('square', 160, 150, 0.08, 0.14);
+    tone('square', 120, 110, 0.12, 0.14, 0.09);
+  },
+  /** menu closed / back */
+  back: () => {
+    tone('square', 660, 660, 0.05, 0.12);
+    tone('square', 440, 440, 0.07, 0.12, 0.05);
+  },
 };

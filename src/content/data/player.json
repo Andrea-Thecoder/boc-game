@@ -1,0 +1,15 @@
+{
+  "maxHp": 5,
+  "runSpeed": 105,
+  "jumpVelocity": 330,
+  "invulnerabilityMs": 1300,
+  "panzata": {
+    "cooldownMs": 550,
+    "durationMs": 260,
+    "lunge": 170,
+    "damage": 3,
+    "reach": 28
+  },
+  "panzerottoHeal": 2,
+  "pickupScore": 50
+}

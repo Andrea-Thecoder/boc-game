@@ -3,6 +3,7 @@ import { GROUND_Y, H, W } from '../config';
 import { TORSO } from '../art/sprites';
 import { music } from '../audio/music';
 import { sfx } from '../audio/sfx';
+import { onActionKey } from '../ui/keys';
 import { clean, kappa } from '../ui/text';
 import { line } from '../content';
 
@@ -43,8 +44,7 @@ abstract class EndScene extends Phaser.Scene {
         music.stop();
         this.scene.start(next);
       };
-      this.input.keyboard!.on('keydown-ENTER', go);
-      this.input.keyboard!.on('keydown-SPACE', go);
+      onActionKey(this, 'confirm', go);
       this.input.on('pointerdown', go);
       this.input.gamepad?.on('down', go);
     });

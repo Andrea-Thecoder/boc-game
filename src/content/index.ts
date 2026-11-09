@@ -7,12 +7,14 @@
 import { pick } from '../core/random';
 import {
   bossSchema,
+  controlsSchema,
   dialogueSchema,
   enemiesSchema,
   levelSchema,
   playerSchema,
   projectilesSchema,
   propsSchema,
+  uiTextSchema,
   weaponsSchema,
   FLAVOUR_IDS,
   SPEAKERS,
@@ -23,20 +25,22 @@ import {
 } from './schemas';
 import { parseContent, validateReferences } from './validate';
 
-import weaponsJson from './weapons.json';
-import playerJson from './player.json';
-import enemiesJson from './enemies.json';
-import projectilesJson from './projectiles.json';
-import bossJson from './boss-panza.json';
-import propsJson from './props.json';
-import level1Json from './levels/level1.json';
-import paoloneJson from './dialoghi/paolone.json';
-import panzaJson from './dialoghi/monsignor-panza.json';
-import nonnaJson from './dialoghi/nonna.json';
-import chierichettoJson from './dialoghi/chierichetto.json';
-import beghinaJson from './dialoghi/beghina.json';
-import sacrestanoJson from './dialoghi/sacrestano.json';
-import narratoreJson from './dialoghi/narratore.json';
+import weaponsJson from './data/weapons.json';
+import playerJson from './data/player.json';
+import enemiesJson from './data/enemies.json';
+import projectilesJson from './data/projectiles.json';
+import bossJson from './data/boss-panza.json';
+import propsJson from './data/props.json';
+import uiJson from './data/ui.json';
+import controlsJson from './data/controls.json';
+import level1Json from './data/levels/level1.json';
+import paoloneJson from './data/dialoghi/paolone.json';
+import panzaJson from './data/dialoghi/monsignor-panza.json';
+import nonnaJson from './data/dialoghi/nonna.json';
+import chierichettoJson from './data/dialoghi/chierichetto.json';
+import beghinaJson from './data/dialoghi/beghina.json';
+import sacrestanoJson from './data/dialoghi/sacrestano.json';
+import narratoreJson from './data/dialoghi/narratore.json';
 
 export * from './schemas';
 
@@ -72,6 +76,8 @@ function load() {
     projectiles: parseContent(projectilesSchema, projectilesJson, 'projectiles.json'),
     boss: parseContent(bossSchema, bossJson, 'boss-panza.json'),
     props: parseContent(propsSchema, propsJson, 'props.json'),
+    ui: parseContent(uiTextSchema, uiJson, 'ui.json'),
+    controls: parseContent(controlsSchema, controlsJson, 'controls.json'),
     levels: { level1: parseContent(levelSchema, level1Json, 'levels/level1.json') },
     dialogues,
   };
