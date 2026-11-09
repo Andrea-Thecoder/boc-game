@@ -315,7 +315,8 @@ Battute con un ruolo fisso:
 
 ### Testi dell'interfaccia (`ui.json`)
 
-Titolo, voci del menu principale e voci delle opzioni. Si possono cambiare liberamente, con un
+Avvertenza mostrata dopo NEW GAME (`disclaimer`: titolo, paragrafi, scritta per saltarla e `durationMs`, quanto resta a schermo),
+titolo, voci del menu principale e voci delle opzioni. Si possono cambiare liberamente, con un
 vincolo: **solo maiuscole senza accenti, cifre e punteggiatura semplice** (sono scritti col font pixel così come sono).
 Una lettera minuscola o accentata blocca il gioco all'avvio con un messaggio chiaro.
 

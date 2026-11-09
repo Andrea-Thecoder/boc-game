@@ -2,6 +2,7 @@ import type Phaser from 'phaser';
 import type { EventBus } from '../core/EventBus';
 import type { BulletKind, Flavour, PickupKind, Weapon } from '../content';
 import type { Enemy } from '../entities/enemies/Enemy';
+import type { RunOutcome } from './telemetry/RunRecorder';
 
 /** Anything a speech bubble can follow. */
 export type BubbleTarget = { x: number; y: number; active?: boolean };
@@ -64,8 +65,10 @@ export interface GameEvents {
   // --- run -----------------------------------------------------------------------------------
   /** something shown in the HUD changed (hp, weapon, ammo, score, boss hp) */
   'hud:changed': void;
-  /** the run is over: no more spawns, the end screen follows */
-  'run:over': { outcome: 'victory' | 'gameover' };
+  /** the run is over: no more spawns, the end screen (or the title, after quitting) follows */
+  'run:over': { outcome: RunOutcome };
+  /** the player paused the run: the pause menu opens */
+  'run:paused': void;
 
   // --- presentation requests -----------------------------------------------------------------
   'fx:sparkle': { x: number; y: number; count?: number };

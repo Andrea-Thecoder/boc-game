@@ -1,36 +1,30 @@
 import Phaser from 'phaser';
-import { H, W } from '../config';
+import { W } from '../config';
 import { sfx } from '../audio/sfx';
 import { CONTENT } from '../content';
 import { VOLUME_MAX } from '../core/Settings';
 import { applySettings, settings } from '../settings';
 import { controlsTable } from '../ui/controlsTable';
 import { Menu } from '../ui/Menu';
-import { panel } from '../ui/panel';
+import { OverlayScene, type OverlayView } from './OverlayScene';
 
 const UI = CONTENT.ui;
-const PANEL_W = 224;
-const PANEL_H = 126;
-const ROWS_W = PANEL_W - 40;
-const TOP = (H - PANEL_H) / 2;
+const PANEL = { w: 224, h: 126 } as const;
+const ROWS_W = PANEL.w - 40;
 
 /**
- * Options overlay, launched on top of the scene that opened it (today the title, later the pause menu).
+ * Options overlay, launched on top of the scene that opened it (the title or the pause menu).
  * Two views: the settings list and the controls table. Settings are saved as soon as they change.
  */
-export default class OptionsScene extends Phaser.Scene {
-  /** objects of the current view, replaced when switching view */
-  private view: { menu: Menu; extra: Phaser.GameObjects.GameObject[] } | null = null;
+export default class OptionsScene extends OverlayScene {
+  protected readonly panelSize = PANEL;
 
   constructor() {
     super('options');
   }
 
   create() {
-    // dims what is below and swallows its clicks
-    this.add.rectangle(0, 0, W, H, 0x0b0710, 0.7).setOrigin(0).setInteractive();
-    panel(this, W / 2, H / 2, PANEL_W, PANEL_H);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => (this.view = null));
+    this.drawFrame();
     const onFullscreen = () => this.view?.menu.refresh();
     this.scale.on(Phaser.Scale.Events.ENTER_FULLSCREEN, onFullscreen);
     this.scale.on(Phaser.Scale.Events.LEAVE_FULLSCREEN, onFullscreen);
@@ -38,10 +32,10 @@ export default class OptionsScene extends Phaser.Scene {
       this.scale.off(Phaser.Scale.Events.ENTER_FULLSCREEN, onFullscreen);
       this.scale.off(Phaser.Scale.Events.LEAVE_FULLSCREEN, onFullscreen);
     });
-    this.showSettings();
+    this.switchView(() => this.settingsView());
   }
 
-  private showSettings(selectControls = false) {
+  private settingsView(selectControls = false): OverlayView {
     const o = UI.options;
     const header = this.header(o.title);
     const menu = new Menu(
@@ -66,23 +60,31 @@ export default class OptionsScene extends Phaser.Scene {
           onConfirm: () => this.scale.toggleFullscreen(),
           onAdjust: () => this.scale.toggleFullscreen(),
         },
-        { label: o.controls, onConfirm: () => this.switchView(() => this.showControls()) },
+        { label: o.controls, onConfirm: () => this.switchView(() => this.controlsView()) },
         // only Italian exists today: shown but locked
         { label: o.language, value: () => UI.languages[settings.get().language], enabled: false },
         { label: o.back, onConfirm: () => this.close() },
       ],
-      { x: W / 2, y: TOP + 30, width: ROWS_W, rowHeight: 14, layout: 'split', onBack: () => this.close(), depth: 20 },
+      {
+        x: W / 2,
+        y: this.top + 30,
+        width: ROWS_W,
+        rowHeight: 14,
+        layout: 'split',
+        onBack: () => this.close(),
+        depth: 20,
+      },
     );
     if (selectControls) menu.select(3);
-    this.view = { menu, extra: [header] };
+    return { menu, extra: [header] };
   }
 
-  private showControls() {
+  private controlsView(): OverlayView {
     const header = this.header(UI.options.controls);
     const left = W / 2 - ROWS_W / 2;
     const extra: Phaser.GameObjects.GameObject[] = [header];
     controlsTable(CONTENT.controls).forEach((row, i) => {
-      const y = TOP + 30 + i * 11;
+      const y = this.top + 30 + i * 11;
       extra.push(this.add.bitmapText(left, y, 'pxo', row.label, 7).setTint(0xe8b830).setDepth(20));
       extra.push(
         this.add
@@ -91,34 +93,15 @@ export default class OptionsScene extends Phaser.Scene {
           .setDepth(20),
       );
     });
-    const back = () => this.switchView(() => this.showSettings(true));
+    const back = () => this.switchView(() => this.settingsView(true));
     const menu = new Menu(this, [{ label: UI.options.back, onConfirm: back }], {
       x: W / 2,
-      y: TOP + PANEL_H - 20,
+      y: this.top + PANEL.h - 20,
       width: ROWS_W,
       onBack: back,
       depth: 20,
     });
-    this.view = { menu, extra };
-  }
-
-  private header(text: string) {
-    return this.add
-      .bitmapText(W / 2, TOP + 9, 'pxo', text, 14)
-      .setOrigin(0.5, 0)
-      .setTint(0xe8b830)
-      .setDepth(20);
-  }
-
-  /** Replaces the current view; the new one starts listening from the next frame. */
-  private switchView(build: () => void) {
-    if (this.view) {
-      this.view.menu.destroy();
-      this.view.extra.forEach((o) => o.destroy());
-    }
-    build();
-    this.view?.menu.setEnabled(false);
-    this.view?.menu.setEnabled(true);
+    return { menu, extra };
   }
 
   private changeVolume(key: 'musicVolume' | 'sfxVolume', delta: 1 | -1) {

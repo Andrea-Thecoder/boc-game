@@ -30,7 +30,8 @@ Job `check` (typecheck, lint, format check, unit test, build) e poi job `e2e` (s
 Se gli e2e falliscono, il report Playwright è scaricabile come artifact della run.
 Flusso di lavoro: branch dedicato → pull request verso `main` → CI verde → merge (fatto dall'utente).
 
-`?debug` nell'URL mostra le hitbox ed espone `window.game`. `?e2e` espone solo l'API di test `window.__boc`.
+`?debug` nell'URL mostra le hitbox ed espone `window.game`. `?e2e` espone solo l'API di test `window.__boc`
+e salta l'avvertenza dopo NEW GAME (`?e2e&disclaimer` la mostra).
 
 ### Unit test (Vitest)
 
@@ -142,6 +143,10 @@ scrive uno nuovo che sostituisce il vecchio.
   `RunSystem` (deve registrare `boss:defeated` prima di `run:over`). Se cambia la forma del riepilogo, incrementare
   `RUN_SUMMARY_SCHEMA_VERSION`.
 - La versione del gioco (`package.json`) è iniettata da Vite come `__APP_VERSION__`.
+- Dopo NEW GAME `DisclaimerScene` mostra l'avvertenza "opera di fantasia" (testi e durata in `ui.json` →
+  `disclaimer`), poi parte il livello: dopo `durationMs` o al primo tasto/clic/pulsante (le ripetizioni di un tasto
+  tenuto premuto non contano). Il "riprova" del game over va dritto al livello. Con `?e2e` è saltata
+  (`SHOW_DISCLAIMER` in `config.ts`) così gli smoke test vanno dritti al livello; i suoi test usano `?e2e&disclaimer`.
 - Titolo e menu (ADR 0007): il primo tasto attiva l'audio e mostra il menu (NEW GAME, LOAD GAME bloccato fino al
   backend, OPTIONS). Le voci sono in inglese per scelta dell'utente, il resto del gioco in italiano.
   `ui/Menu` è il componente riusabile (tastiera, mouse, gamepad; il cursore salta le voci bloccate, regole pure in
@@ -149,12 +154,19 @@ scrive uno nuovo che sostituisce il vecchio.
   lingua (solo italiano, bloccata). Le impostazioni stanno in `core/Settings` (`SettingsStore`, chiave `boc.settings`,
   ogni campo con il suo fallback) e si applicano con `applySettings()` di `src/settings.ts`. Come la telemetria,
   il salvataggio delle impostazioni **non deve mai far fallire il gioco**.
+- **Pausa**: il tasto `pause` (P / Esc) fa `RunSystem.handlePause()`, che congela il mondo ed emette `run:paused`;
+  `GameScene` lancia `PauseScene` passandole `PauseActions` (`resume` / `quit` del `RunSystem`): la scena di pausa non
+  decide nulla da sola. Voci: RESUME, OPTIONS (la stessa `OptionsScene`), MAIN MENU con conferma (NO selezionato).
+  `quit()` registra la partita come abbandonata (`run:over` con `outcome: 'quit'`, telemetria schema v2) e torna al
+  titolo. Attenzione: `anims.pauseAll()` è **globale**, va sempre riattivato prima di lasciare il livello.
+  Gli overlay (`OptionsScene`, `PauseScene`) estendono `OverlayScene` (sfondo scurito, riquadro, cambio di vista).
 - **Tasti**: si decidono **solo** in `content/data/controls.json` (azione → tasti, nomi di
   `Phaser.Input.Keyboard.KeyCodes`). Nel codice non si scrive mai un tasto: `ui/Controls` (gioco), `ui/Menu` (menu),
   `onActionKey()` di `ui/keys.ts` (muto, schermate finali). Lo schema rifiuta un tasto usato per due azioni dello
   stesso gruppo (gioco o menu). La tabella CONTROLS delle opzioni è generata dai tasti veri (`ui/controlsTable.ts`).
   Il gamepad usa il layout standard, definito in `Controls` e `Menu`.
-- Le scene overlay (oggi `OptionsScene`) stanno in fondo alla lista di `main.ts`: Phaser disegna sopra le ultime.
+- Le scene overlay (`PauseScene`, poi `OptionsScene` che può aprirsi sopra la pausa) stanno in fondo alla lista di
+  `main.ts`: Phaser disegna sopra le ultime.
 - Grafica e audio sono interamente procedurali (`art/`, `audio/`). Restano come segnaposto finché non arriva la pixel art vera.
 
 ## Roadmap

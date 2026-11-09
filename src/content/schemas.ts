@@ -286,8 +286,26 @@ const pixelText = z
   );
 
 export const uiTextSchema = z.object({
+  /** shown after NEW GAME, before the level, until a key is pressed or durationMs is over */
+  disclaimer: z.object({
+    title: pixelText,
+    paragraphs: z.array(pixelText).min(1),
+    skip: pixelText,
+    durationMs: z.number().int().positive(),
+  }),
   title: z.object({ series: pixelText, battleFor: pixelText, place: pixelText, pressAnyKey: pixelText }),
   mainMenu: z.object({ newGame: pixelText, loadGame: pixelText, options: pixelText }),
+  pauseMenu: z.object({
+    title: pixelText,
+    resume: pixelText,
+    options: pixelText,
+    mainMenu: pixelText,
+    /** asked before leaving the level: the run is lost */
+    confirmQuestion: pixelText,
+    confirmWarning: pixelText,
+    yes: pixelText,
+    no: pixelText,
+  }),
   options: z.object({
     title: pixelText,
     musicVolume: pixelText,

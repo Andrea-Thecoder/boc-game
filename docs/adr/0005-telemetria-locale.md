@@ -25,3 +25,7 @@ offline, e il backend non esiste ancora.
 ## Conseguenze
 - Nella fase 6 basterà un `HttpSink` (invio al backend, con coda locale se offline): il resto del gioco non cambia.
 - Il client può mentire: il backend dovrà validare i riepiloghi (plausibilità di punteggio e durata).
+
+## Note
+- Schema 2: `outcome` può valere anche `quit` (partita abbandonata dal menu di pausa). I record con `schemaVersion` 1
+  hanno solo `victory` e `gameover`.

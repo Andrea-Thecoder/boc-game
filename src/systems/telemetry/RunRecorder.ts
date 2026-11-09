@@ -4,9 +4,12 @@
  */
 
 /** Bump when the summary shape changes: the backend uses it to read old and new records. */
-export const RUN_SUMMARY_SCHEMA_VERSION = 1;
+export const RUN_SUMMARY_SCHEMA_VERSION = 2;
 
-export type RunOutcome = 'victory' | 'gameover';
+/**
+ * How the run ended. `quit` = left from the pause menu (added in schema version 2).
+ */
+export type RunOutcome = 'victory' | 'gameover' | 'quit';
 
 export interface RunSummary {
   schemaVersion: typeof RUN_SUMMARY_SCHEMA_VERSION;
