@@ -1,30 +1,48 @@
 import Phaser from 'phaser';
 import { sfx } from '../../audio/sfx';
-import { pick } from '../../ui/text';
-import type GameScene from '../../scenes/GameScene';
+import type { EnemyType } from '../../content';
+import type { GameBus } from '../../systems/events';
 import type { Player } from '../Player';
+
+export type EnemyKind = EnemyType | 'monsignor-panza';
 
 /** Base class for every faithful of Monsignor Panza. */
 export abstract class Enemy extends Phaser.Physics.Arcade.Sprite {
   hp: number;
   dead = false;
   facing = -1;
-  protected gs: GameScene;
+  /** what kind of enemy this is (telemetry, future bestiary) */
+  abstract readonly kind: EnemyKind;
   protected abstract readonly deadFrame: number;
   protected abstract readonly score: number;
-  protected abstract readonly screams: readonly string[];
+  /** What the enemy shouts while flying away (from content/data/dialoghi/<enemy>.json). */
+  protected abstract deathScream(): string;
 
-  constructor(gs: GameScene, x: number, y: number, texture: string, hp: number) {
-    super(gs, x, y, texture, 0);
-    this.gs = gs;
+  /**
+   * @param bus the only channel to the rest of the game (see systems/events.ts)
+   * @param target who this enemy hunts: Paolone
+   */
+  constructor(
+    scene: Phaser.Scene,
+    protected readonly bus: GameBus,
+    protected readonly target: Player,
+    x: number,
+    y: number,
+    texture: string,
+    hp: number,
+  ) {
+    super(scene, x, y, texture, 0);
     this.hp = hp;
-    gs.add.existing(this);
-    gs.physics.add.existing(this);
+    scene.add.existing(this);
+    scene.physics.add.existing(this);
     this.setOrigin(0.5, 1).setDepth(45);
   }
 
-  /** AI tick, only called while alive and near the camera. */
-  protected abstract think(time: number, player: Player): void;
+  /**
+   * AI tick, only called while alive and near the camera.
+   * Subclasses advance their StateMachine here with `deltaMs`.
+   */
+  protected abstract think(time: number, deltaMs: number, player: Player): void;
 
   get isBoss() {
     return false;
@@ -34,7 +52,7 @@ export abstract class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.dead) return;
     this.hp -= dmg;
     this.setTintFill(0xffffff);
-    this.gs.time.delayedCall(60, () => this.active && this.clearTint());
+    this.scene.time.delayedCall(60, () => this.active && this.clearTint());
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setVelocityX((this.x < fromX ? -1 : 1) * knock);
     sfx.hit();
@@ -54,17 +72,19 @@ export abstract class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.setVelocity(dir * (90 + Math.random() * 80), -220 - Math.random() * 80);
     this.setAngularVelocity(dir * (400 + Math.random() * 400));
     sfx.enemyDie();
-    this.gs.onEnemyKilled(this, this.score);
-    if (Math.random() < 0.6) this.gs.say(this, pick(this.screams), 1100, true);
-    this.gs.time.delayedCall(2500, () => this.destroy());
+    this.bus.emit('enemy:killed', { enemy: this, points: this.score });
+    if (Math.random() < 0.6) {
+      this.bus.emit('dialogue:say', { target: this, text: this.deathScream(), durationMs: 1100, shout: true });
+    }
+    this.scene.time.delayedCall(2500, () => this.destroy());
   }
 
   preUpdate(time: number, delta: number) {
     super.preUpdate(time, delta);
     if (this.dead) return;
-    const cam = this.gs.cameras.main;
+    const cam = this.scene.cameras.main;
     const near = this.x > cam.scrollX - 60 && this.x < cam.scrollX + cam.width + 60;
-    if (near && this.gs.player && !this.gs.player.dead) this.think(time, this.gs.player);
+    if (near && !this.target.dead) this.think(time, delta, this.target);
     else (this.body as Phaser.Physics.Arcade.Body).setVelocityX(0);
     if (this.y > 240) this.destroy();
   }

@@ -1,0 +1,5 @@
+node_modules/
+dist/
+package-lock.json
+# Markdown (GDD, README, CLAUDE.md) is written by hand: never reformat it
+*.md

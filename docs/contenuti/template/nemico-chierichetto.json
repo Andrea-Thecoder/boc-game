@@ -1,0 +1,14 @@
+{
+  "hp": 2,
+  "score": 100,
+  "walkSpeed": 58,
+  "retreatSpeed": 48,
+  "keepDistance": [60, 110],
+  "attack": {
+    "firstDelayMs": [900, 1800],
+    "cooldownMs": [1600, 2500],
+    "windupMs": 300,
+    "range": 220,
+    "flightTime": 0.85
+  }
+}

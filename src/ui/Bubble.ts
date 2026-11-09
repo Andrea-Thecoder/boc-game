@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { clean } from '../art/font';
+import { clean } from './text';
 import { P } from '../art/palette';
 import { sfx } from '../audio/sfx';
 
@@ -62,7 +62,8 @@ export class Bubble extends Phaser.GameObjects.Container {
 
   private drawBg(w: number, h: number) {
     const g = this.bg;
-    const x = -Math.floor(w / 2), y = -h;
+    const x = -Math.floor(w / 2),
+      y = -h;
     g.fillStyle(0x120b16);
     g.fillRect(x - 1, y - 1, w + 2, h + 2);
     g.fillStyle(this.shout ? 0xffe9a0 : 0xf4efe4);
@@ -95,10 +96,4 @@ export class Bubble extends Phaser.GameObjects.Container {
     this.typeTimer?.remove();
     super.destroy(fromScene);
   }
-}
-
-/** Floating "+100" style text. */
-export function popText(scene: Phaser.Scene, x: number, y: number, text: string, color = 0xe8b830) {
-  const t = scene.add.bitmapText(Math.round(x), Math.round(y), 'pxo', clean(text), 7).setOrigin(0.5).setTint(color).setDepth(900);
-  scene.tweens.add({ targets: t, y: y - 18, alpha: 0, duration: 800, ease: 'Cubic.Out', onComplete: () => t.destroy() });
 }

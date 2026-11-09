@@ -1,4 +1,6 @@
-# GDD: Paolone contro Monsignor Panza
+# GDD: The Monsignor Chronicles: Battle for Chiappetons
+
+Titolo del gioco: **The Monsignor Chronicles: Battle for Chiappetons** (protagonista Paolone, cattivo Monsignor Panza).
 
 Game Design Document: la fonte di verità del gioco. Prima si decide qui, poi si scrive il codice.
 

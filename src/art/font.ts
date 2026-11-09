@@ -71,7 +71,9 @@ function build(scene: Phaser.Scene, key: string, ink: string, outline: string | 
     const gx = (idx % PER_ROW) * cw + ox;
     const gy = Math.floor(idx / PER_ROW) * ch + ox;
     G[c].split(' ').forEach((row, j) => {
-      [...row].forEach((v, i) => { if (v === '#') p.px(gx + i, gy + j, ink); });
+      [...row].forEach((v, i) => {
+        if (v === '#') p.px(gx + i, gy + j, ink);
+      });
     });
     if (outline) p.outline(outline, gx - 1, gy - 1, cw, ch);
   });
@@ -87,20 +89,11 @@ function build(scene: Phaser.Scene, key: string, ink: string, outline: string | 
     'offset.x': 0,
     'offset.y': 0,
     lineSpacing: outline ? 1 : 2,
-  } as unknown as Phaser.Types.GameObjects.BitmapText.RetroFontConfig);
+  });
   scene.cache.bitmapFont.add(key, data);
 }
 
 export function registerFonts(scene: Phaser.Scene) {
   build(scene, 'px', P.white, null);
   build(scene, 'pxo', P.white, P.black);
-}
-
-/** Uppercases and strips accents so any Italian string can be rendered with the glyph set. */
-export function clean(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toUpperCase()
-    .replace(/[^A-Z0-9 !'",\-.:?+/()<>~\n]/g, '');
 }

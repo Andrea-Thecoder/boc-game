@@ -1,0 +1,9 @@
+{
+  "trigger": 600,
+  "line": "ondata_processione",
+  "spawns": [
+    { "type": "chierichetto", "at": "right" },
+    { "type": "beghina", "at": "left", "delay": 800 },
+    { "type": "sacrestano", "at": 760, "y": 112, "delay": 1500 }
+  ]
+}

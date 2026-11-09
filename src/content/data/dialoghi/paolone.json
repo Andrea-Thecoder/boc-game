@@ -1,0 +1,22 @@
+{
+  "titolo": "Chiappetons non si tocca!",
+  "intro_livello": "Monsignor Panza vuole conquistare il Vaticano? Prima deve passare da Paolone!",
+  "ondata_chierichetti": "Chierichetti! Venite, vi offro un succhino... IN FACCIA!",
+  "ondata_processione": "Pure dietro! Ma che è, una processione?",
+  "ondata_beghine": "Le beghine col rosario... qui ci vuole la panzata!",
+  "ondata_incenso": "Che puzza d'incenso... peggio dei calzini di zio Gaetano!",
+  "risposta_boss": "Prima devi passare dal mio succhino al tamarindo!",
+  "raccolta_pera": "Pera! Che bontà, ne tiro tre alla volta!",
+  "raccolta_ace": "ACE! Vitamine a cannonate!",
+  "raccolta_pesca": "Pesca! Rimbalza come la mia panza!",
+  "raccolta_panzerotto": ["Panzerotto! Mamma mia che bontà!", "Questo lo mangio subito!"],
+  "munizioni_finite": "Finiti! Torno al tamarindo, il classico.",
+  "morte": ["Mannaggia...", "Mi sento... calante...", "Ditelo a mamma..."],
+  "boss_sconfitto": "Il Vaticano può dormire tranquillo. Ora però mi serve un succhino per me.",
+  "game_over": [
+    "Mannaggia... mi serve un altro succhino.",
+    "Il Monsignore ha vinto... per ora.",
+    "Chiappetons, perdonami!"
+  ],
+  "vittoria": "Il Vaticano può dormire tranquillo. Io invece vado a mangiare."
+}

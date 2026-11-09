@@ -2,11 +2,11 @@ import Phaser from 'phaser';
 import { TORSO } from '../art/sprites';
 import { GROUND_Y } from '../config';
 import { sfx } from '../audio/sfx';
-import { WEAPONS, type WeaponDef } from '../weapons';
-import type { Flavour } from '../art/sprites';
-import type GameScene from '../scenes/GameScene';
+import { CONTENT, type Flavour, type Weapon } from '../content';
+import type { GameBus } from '../systems/events';
 import type { Controls } from '../ui/Controls';
-import { Sukkino } from './Sukkino';
+
+const STATS = CONTENT.player;
 
 type Aim = 'fwd' | 'up' | 'diagUp' | 'down' | 'diagDown';
 
@@ -21,9 +21,9 @@ const AIMS: Record<Aim, { frame: number; ox: number; oy: number; dx: number; dy:
 
 export class Player extends Phaser.Physics.Arcade.Sprite {
   readonly torso: Phaser.GameObjects.Sprite;
-  maxHp = 5;
-  hp = 5;
-  weapon: WeaponDef = WEAPONS.tamarindo;
+  maxHp = STATS.maxHp;
+  hp = STATS.maxHp;
+  weapon: Weapon = CONTENT.weapons.tamarindo;
   ammo = Infinity;
   facing = 1;
   dead = false;
@@ -42,12 +42,20 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private wasOnGround = true;
   private fallSpeed = 0;
 
-  constructor(private gs: GameScene, x: number, y: number) {
-    super(gs, x, y, 'paolone-legs', 0);
-    gs.add.existing(this);
-    gs.physics.add.existing(this);
+  /**
+   * Paolone talks to the rest of the game only through `bus` (see systems/events.ts).
+   */
+  constructor(
+    scene: Phaser.Scene,
+    private readonly bus: GameBus,
+    x: number,
+    y: number,
+  ) {
+    super(scene, x, y, 'paolone-legs', 0);
+    scene.add.existing(this);
+    scene.physics.add.existing(this);
     this.setOrigin(0.5, 1).setDepth(60);
-    this.torso = gs.add.sprite(x, y, 'paolone-torso', 0).setOrigin(0.5, 1).setDepth(61);
+    this.torso = scene.add.sprite(x, y, 'paolone-torso', 0).setOrigin(0.5, 1).setDepth(61);
     const body = this.body as Phaser.Physics.Arcade.Body;
     body.setSize(16, 28).setOffset(10, 6);
     body.setMaxVelocityY(520);
@@ -76,26 +84,31 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // movement
     if (h !== 0) this.facing = h;
     const lunging = time < this.poseUntil && this.poseFrame === TORSO.panza;
-    if (!lunging) body.setVelocityX(h * 105);
+    if (!lunging) body.setVelocityX(h * STATS.runSpeed);
     if (!this.frozen && c.jumpPressed && ground) {
       if (c.down && this.y < GROUND_Y - 2) {
         this.dropUntil = time + 250;
       } else {
-        body.setVelocityY(-330);
+        body.setVelocityY(-STATS.jumpVelocity);
         sfx.jump();
       }
     }
     if (!c.jump && body.velocity.y < -120) body.setVelocityY(body.velocity.y * 0.85); // variable jump height
 
     // keep inside the visible area (no going back, Metal Slug style)
-    if (this.x < this.minX) { this.x = this.minX; body.setVelocityX(Math.max(0, body.velocity.x)); }
-    if (this.x > this.maxX) { this.x = this.maxX; body.setVelocityX(Math.min(0, body.velocity.x)); }
+    if (this.x < this.minX) {
+      this.x = this.minX;
+      body.setVelocityX(Math.max(0, body.velocity.x));
+    }
+    if (this.x > this.maxX) {
+      this.x = this.maxX;
+      body.setVelocityX(Math.min(0, body.velocity.x));
+    }
 
     // landing thud: Paolone is heavy
     if (ground && !this.wasOnGround && this.fallSpeed > 260) {
       sfx.land();
-      this.gs.cameras.main.shake(90, 0.006);
-      this.gs.dust(this.x, this.y);
+      this.bus.emit('player:landed', { x: this.x, y: this.y });
     }
     this.fallSpeed = body.velocity.y;
     this.wasOnGround = ground;
@@ -145,50 +158,53 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     const sx = this.x + a.ox * this.facing;
     const sy = this.y + a.oy;
     const base = Math.atan2(a.dy, a.dx * this.facing);
-    for (const off of w.spread) this.gs.addSukkino(new Sukkino(this.gs, sx, sy, w, base + off * this.facing));
+    const angles = w.spread.map((off) => base + off * this.facing);
     sfx.throw();
+    let depleted = false;
     if (this.ammo !== Infinity) {
       this.ammo--;
       if (this.ammo <= 0) {
         this.setWeapon('tamarindo');
-        this.gs.say(this, 'Finiti! Torno al tamarindo, il classico.');
+        depleted = true;
       }
     }
-    this.gs.syncHud();
+    // the volley uses the weapon in hand when throwing, even if it just ran out
+    this.bus.emit('player:threw', { weapon: w, x: sx, y: sy, angles });
+    if (depleted) this.bus.emit('weapon:depleted');
   }
 
   private panzata(time: number) {
-    this.panzaReady = time + 550;
-    this.poseUntil = time + 260;
+    const { cooldownMs, durationMs, lunge, damage, reach } = STATS.panzata;
+    this.panzaReady = time + cooldownMs;
+    this.poseUntil = time + durationMs;
     this.poseFrame = TORSO.panza;
-    (this.body as Phaser.Physics.Arcade.Body).setVelocityX(this.facing * 170);
+    (this.body as Phaser.Physics.Arcade.Body).setVelocityX(this.facing * lunge);
     sfx.panzata();
-    const hit = new Phaser.Geom.Rectangle(this.facing > 0 ? this.x : this.x - 28, this.y - 28, 28, 24);
-    this.gs.meleeHit(hit, 3, this.facing);
+    const area = new Phaser.Geom.Rectangle(this.facing > 0 ? this.x : this.x - reach, this.y - 28, reach, 24);
+    this.bus.emit('player:panzata', { area, damage, facing: this.facing });
   }
 
   setWeapon(f: Flavour) {
-    this.weapon = WEAPONS[f];
+    this.weapon = CONTENT.weapons[f];
     this.ammo = this.weapon.ammo;
-    this.gs.syncHud();
+    this.bus.emit('weapon:changed', { flavour: f, ammo: this.ammo });
   }
 
   heal(n: number) {
     this.hp = Math.min(this.maxHp, this.hp + n);
-    this.gs.syncHud();
+    this.bus.emit('player:healed', { hp: this.hp });
   }
 
   hurt(fromX: number) {
     if (this.invulnerable) return;
     this.hp--;
-    this.invulnUntil = this.scene.time.now + 1300;
+    this.invulnUntil = this.scene.time.now + STATS.invulnerabilityMs;
     this.poseUntil = this.scene.time.now + 350;
     this.poseFrame = TORSO.hurt;
     const dir = this.x < fromX ? -1 : 1;
     this.setVelocity(dir * 140, -200);
     sfx.hurt();
-    this.gs.cameras.main.shake(140, 0.01);
-    this.gs.syncHud();
+    this.bus.emit('player:hurt', { hp: this.hp });
     if (this.hp <= 0) this.die(dir);
   }
 
@@ -198,8 +214,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.setFrame(5);
     this.setVelocity(dir * 90, -260);
     this.setAngularVelocity(dir * 360);
-    this.gs.time.delayedCall(700, () => this.setAngularVelocity(0));
-    this.gs.onPlayerDeath();
+    this.scene.time.delayedCall(700, () => this.setAngularVelocity(0));
+    this.bus.emit('player:died');
   }
 
   destroy(fromScene?: boolean) {
