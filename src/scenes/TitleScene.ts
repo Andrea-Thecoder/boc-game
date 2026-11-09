@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GROUND_Y, H, W } from '../config';
+import { GROUND_Y, H, SHOW_DISCLAIMER, W } from '../config';
 import { TORSO } from '../art/sprites';
 import { audio } from '../audio/engine';
 import { music } from '../audio/music';
@@ -133,7 +133,10 @@ export default class TitleScene extends Phaser.Scene {
     this.menu.setEnabled(false);
     music.stop();
     this.cameras.main.fadeOut(300, 0, 0, 0);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => this.scene.start('game'));
+    // NEW GAME shows the "work of fiction" notice first (skipped in e2e runs, see config.ts)
+    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () =>
+      this.scene.start(SHOW_DISCLAIMER ? 'disclaimer' : 'game'),
+    );
   }
 
   private openOptions() {

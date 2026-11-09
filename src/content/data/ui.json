@@ -1,4 +1,13 @@
 {
+  "disclaimer": {
+    "title": "AVVERTENZA",
+    "paragraphs": [
+      "QUESTO GIOCO E' UN'OPERA DI FANTASIA. PERSONAGGI, NOMI, LUOGHI E FATTI SONO INVENTATI: OGNI RIFERIMENTO A PERSONE O FATTI REALI E' PURAMENTE CASUALE.",
+      "IL TONO E' COMICO E PARODISTICO. NON SI VUOLE OFFENDERE NESSUNO: NE' LA FEDE, NE' LA CHIESA, NE' IL SUD ITALIA, NE' ALCUNA PERSONA O ISTITUZIONE."
+    ],
+    "skip": "PREMI UN TASTO PER CONTINUARE",
+    "durationMs": 12000
+  },
   "title": {
     "series": "THE MONSIGNOR CHRONICLES",
     "battleFor": "BATTLE FOR",
@@ -9,6 +18,16 @@
     "newGame": "NEW GAME",
     "loadGame": "LOAD GAME",
     "options": "OPTIONS"
+  },
+  "pauseMenu": {
+    "title": "PAUSED",
+    "resume": "RESUME",
+    "options": "OPTIONS",
+    "mainMenu": "MAIN MENU",
+    "confirmQuestion": "QUIT TO MAIN MENU?",
+    "confirmWarning": "PROGRESS WILL BE LOST",
+    "yes": "YES",
+    "no": "NO"
   },
   "options": {
     "title": "OPTIONS",

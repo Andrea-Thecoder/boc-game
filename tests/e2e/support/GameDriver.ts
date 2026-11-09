@@ -46,6 +46,28 @@ export class GameDriver {
     await this.page.evaluate(() => window.__boc!.freeze(1));
   }
 
+  /** Opens the game with the "work of fiction" notice enabled (normally skipped in e2e runs). */
+  async openWithDisclaimer(): Promise<void> {
+    await this.page.goto('/?e2e&disclaimer');
+    await this.page.waitForFunction(() => window.__boc?.ready() === true);
+    await this.page.evaluate(() => window.__boc!.freeze(1));
+  }
+
+  /** Title → NEW GAME → the notice shown before the level. */
+  async newGameUntilDisclaimer(): Promise<TestState> {
+    await this.unlockAudio();
+    await this.tap('confirm');
+    return this.runUntil((s) => s.scenes.includes('disclaimer'), 60, 5);
+  }
+
+  /** Presses a key bound to nothing (F2 can never be bound in controls.json): "press any key". */
+  async pressAnyKey(): Promise<TestState> {
+    await this.page.keyboard.down('F2');
+    await this.step(2);
+    await this.page.keyboard.up('F2');
+    return this.step(1);
+  }
+
   step(frames: number): Promise<TestState> {
     return this.page.evaluate((n) => window.__boc!.step(n), frames);
   }
@@ -84,10 +106,7 @@ export class GameDriver {
 
   /** The first key press turns the audio on and shows the main menu. */
   async unlockAudio(): Promise<TestState> {
-    // any key works: F2 can never be bound in controls.json, so it does nothing else
-    await this.page.keyboard.down('F2');
-    await this.step(2);
-    await this.page.keyboard.up('F2');
+    await this.pressAnyKey();
     return this.step(30);
   }
 

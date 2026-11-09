@@ -122,6 +122,8 @@ export class Menu {
 
   /** Redraws values, pips and the cursor (call after an external change). */
   refresh() {
+    // an item's action may have closed the menu (BACK, YES, switching view): nothing left to draw
+    if (this.destroyed) return;
     this.rows.forEach((row, i) => {
       const on = this.isEnabled(row.item);
       const tint = !on ? TINT.disabled : i === this.index ? TINT.selected : TINT.normal;
@@ -215,7 +217,7 @@ export class Menu {
   };
 
   private handle(command: Command) {
-    if (!this.enabled) return;
+    if (!this.enabled || this.destroyed) return;
     const row = this.rows[this.index];
     switch (command) {
       case 'up':
@@ -279,7 +281,7 @@ export class Menu {
   }
 
   private click(row: Row, pointerX: number) {
-    if (!this.enabled) return;
+    if (!this.enabled || this.destroyed) return;
     if (!this.isEnabled(row.item)) {
       sfx.denied();
       return;

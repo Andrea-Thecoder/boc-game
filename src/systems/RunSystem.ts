@@ -1,19 +1,20 @@
-import type Phaser from 'phaser';
-import { H, W } from '../config';
+import { W } from '../config';
 import { line } from '../content';
 import { clean } from '../ui/text';
 import type { DialogueSystem } from './DialogueSystem';
 import type { GameContext } from './GameContext';
 import type { ScoreSystem } from './ScoreSystem';
 
-export type RunOutcome = 'victory' | 'gameover';
+/** End screens, named like their scenes. */
+type EndScreen = 'victory' | 'gameover';
 
-/** The life cycle of one run: mission card, pause, death, victory and the hand-off to the end screen. */
+/** The life cycle of one run: mission card, pause, death, victory, quitting and the hand-off to the next screen. */
 export class RunSystem {
   private finished = false;
   private pausedState = false;
   private readonly startedAt: number;
-  private readonly pauseText: Phaser.GameObjects.BitmapText;
+  /** frame of the last resume: a pause press in that same frame belongs to the menu that just closed */
+  private resumedOnFrame = -1;
 
   constructor(
     private readonly ctx: GameContext,
@@ -23,12 +24,6 @@ export class RunSystem {
   ) {
     const scene = ctx.scene;
     this.startedAt = scene.time.now;
-    this.pauseText = scene.add
-      .bitmapText(W / 2, H / 2, 'pxo', 'PAUSA', 14)
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(2000)
-      .setVisible(false);
 
     const card = scene.add
       .bitmapText(W / 2, 58, 'pxo', clean(`MISSIONE 1\n${levelName}`), 7)
@@ -48,13 +43,42 @@ export class RunSystem {
     return this.pausedState;
   }
 
-  /** Toggles pause on the pause button (ignored once the run is over). */
+  /**
+   * Pause button pressed during the level: freezes the world and asks for the pause menu (`run:paused`).
+   * While paused the menu owns the input: resuming goes through `resume()`.
+   */
   handlePause(pausePressed: boolean) {
-    if (!pausePressed || this.finished) return;
+    const frame = this.ctx.scene.game.getFrame();
+    if (!pausePressed || this.finished || this.pausedState || frame === this.resumedOnFrame) return;
+    this.pausedState = true;
+    this.freeze(true);
+    this.ctx.bus.emit('run:paused');
+  }
+
+  /** Back to the game (RESUME in the pause menu). */
+  resume() {
+    if (!this.pausedState) return;
+    this.pausedState = false;
+    this.resumedOnFrame = this.ctx.scene.game.getFrame();
+    this.freeze(false);
+  }
+
+  /** Leaves the run from the pause menu: it counts as abandoned, then back to the title. */
+  quit() {
+    if (this.finished) return;
+    this.finished = true;
+    // the animation manager is global: leaving it paused would freeze the title screen too
+    this.freeze(false);
+    this.pausedState = false;
+    this.ctx.bus.emit('run:over', { outcome: 'quit' });
     const scene = this.ctx.scene;
-    this.pausedState = !this.pausedState;
-    this.pauseText.setVisible(this.pausedState);
-    if (this.pausedState) {
+    scene.scene.stop('hud');
+    scene.scene.start('title');
+  }
+
+  private freeze(on: boolean) {
+    const scene = this.ctx.scene;
+    if (on) {
       scene.physics.world.pause();
       scene.time.paused = true;
       scene.tweens.pauseAll();
@@ -85,7 +109,7 @@ export class RunSystem {
     this.ctx.scene.time.delayedCall(5200, () => this.end('victory'));
   }
 
-  private end(next: RunOutcome) {
+  private end(next: EndScreen) {
     const scene = this.ctx.scene;
     scene.scene.stop('hud');
     scene.scene.start(next, {

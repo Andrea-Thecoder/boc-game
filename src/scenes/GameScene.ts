@@ -22,6 +22,7 @@ import { browserStorage } from '../core/storage';
 import { LocalStorageSink } from '../systems/telemetry/sinks';
 import { TelemetrySystem } from '../systems/telemetry/TelemetrySystem';
 import { Controls } from '../ui/Controls';
+import type { PauseActions } from './PauseScene';
 import { onActionKey } from '../ui/keys';
 
 const LEVEL = CONTENT.levels.level1;
@@ -110,7 +111,7 @@ export default class GameScene extends Phaser.Scene {
     if (DEBUG) this.physics.world.createDebugGraphic();
   }
 
-  /** Cross-system reactions that are pure wiring: dialogue lines and music cues. */
+  /** Cross-system reactions that are pure wiring: dialogue lines, music cues, the pause menu. */
   private wireEvents() {
     const { bus, player } = this;
     const { dialogue } = this.systems;
@@ -119,6 +120,11 @@ export default class GameScene extends Phaser.Scene {
     });
     bus.on('weapon:depleted', () => dialogue.say(player, line('paolone', 'munizioni_finite')));
     bus.on('boss:arenaLocked', () => music.play('boss'));
+    bus.on('run:paused', () => {
+      const { run } = this.systems;
+      const actions: PauseActions = { resume: () => run.resume(), quit: () => run.quit() };
+      this.scene.launch('pause', actions);
+    });
     bus.on('run:over', ({ outcome }) => {
       if (outcome === 'victory') music.play('victory');
       else music.stop();

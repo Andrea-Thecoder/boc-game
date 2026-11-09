@@ -10,6 +10,8 @@ const params = new URLSearchParams(location.search);
 export const DEBUG = params.has('debug');
 /** `?e2e`: solo API di test (`window.__boc`), usata dagli smoke test Playwright. */
 export const E2E = params.has('e2e');
+/** Avvertenza dopo NEW GAME: con `?e2e` si salta (i test vanno dritti al livello), a meno di `&disclaimer`. */
+export const SHOW_DISCLAIMER = !E2E || params.has('disclaimer');
 
 // --- camera & arena tuning (feel, not balancing: stays in code) -------------------------------
 /** Paolone is kept at this fraction of the screen width from the left edge. */

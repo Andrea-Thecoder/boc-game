@@ -42,6 +42,19 @@ describe('TelemetrySystem', () => {
     expect(sink.recorded).toHaveLength(1);
   });
 
+  it('runOver_quitFromPauseMenu_recordsAnAbandonedRun', () => {
+    // Arrange
+    const { bus, sink, clock } = setup();
+    bus.emit('wave:started', { index: 0 });
+    clock.now = 31_000;
+
+    // Act
+    bus.emit('run:over', { outcome: 'quit' });
+
+    // Assert
+    expect(sink.recorded[0]).toMatchObject({ outcome: 'quit', durationMs: 30_000, wavesStarted: 1 });
+  });
+
   it('runOver_emittedTwice_recordsOnlyOnce', () => {
     // Arrange
     const { bus, sink } = setup();
